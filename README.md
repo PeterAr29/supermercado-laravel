@@ -1,5 +1,17 @@
 # Tattos Market — Supermercado online
 
+[![release](https://img.shields.io/badge/release-v1.0.0-2ea44f)](https://github.com/PeterAr29/supermercado-laravel/releases/tag/v1.0.0)
+
+<!--
+    El badge es ESTÁTICO a propósito, así que hay que subirle la versión a mano
+    en cada release. El dinámico —img.shields.io/github/v/release/…— no sirve
+    mientras el repositorio sea privado: shields no puede leerlo y renderiza
+    «release: no releases or repo not found», que es peor que no tener badge.
+
+    Si el repositorio pasa a público, se cambia por:
+    [![release](https://img.shields.io/github/v/release/PeterAr29/supermercado-laravel)](…/releases/latest)
+-->
+
 Tienda de supermercado con panel de gestión, sobre Laravel 10. Tiene **dos caras**: el catálogo y el carrito para el cliente, y `/admin` para quien gestiona el negocio —catálogo, proveedores, órdenes de compra e inventario con kardex—.
 
 | | |
