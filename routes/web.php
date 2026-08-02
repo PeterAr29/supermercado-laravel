@@ -12,14 +12,17 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Zona privada — requiere sesión iniciada
+| Zona de gestión — requiere sesión iniciada Y rol de administrador
 |--------------------------------------------------------------------------
 | Se declara ANTES que la zona pública a propósito: 'productos/create' debe
 | registrarse antes que 'productos/{producto}', o la segunda capturaría la
 | palabra "create" como si fuera un id.
+|
+| Hasta la Fase 3 aquí solo había 'auth': cualquiera que se registrara podía
+| borrar el catálogo (H-14). El grupo pasa a exigir además el rol.
 */
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'admin'])->group(function () {
 
     // Productos — todo salvo consultar
     Route::resource('productos', ProductoController::class)->except(['index', 'show']);
@@ -52,7 +55,18 @@ Route::middleware('auth')->group(function () {
     // Proveedores publicados en Google Sheets
     Route::get('/proveedores-sheet', [ProveedorSheetController::class, 'index'])->name('proveedores.sheet');
 
-    // Panel Breeze
+});
+
+/*
+|--------------------------------------------------------------------------
+| Zona autenticada — cualquier rol
+|--------------------------------------------------------------------------
+| Perfil y panel de Breeze: son del usuario, no de la gestión. Salen del grupo
+| 'admin' para que un cliente pueda seguir editando sus datos (H-14).
+*/
+
+Route::middleware('auth')->group(function () {
+
     Route::get('/dashboard', fn () => view('dashboard'))->middleware('verified')->name('dashboard');
 
     // Perfil — el controlador y las vistas existían, pero las rutas nunca
