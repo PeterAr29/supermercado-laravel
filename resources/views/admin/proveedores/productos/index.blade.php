@@ -41,7 +41,7 @@
                                 @csrf
                                 @method('DELETE')
 
-                                <button class="btn btn-danger btn-sm" onclick="return confirm('Â¿Quitar producto?')">
+                                <button class="btn btn-danger btn-sm" onclick="return confirm('¿Quitar producto?')">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>

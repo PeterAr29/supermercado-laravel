@@ -12,7 +12,7 @@
     </div>
 
     <div class="col-md-6 mb-3">
-        <label>TelÃ©fono</label>
+        <label>Teléfono</label>
         <input type="text" name="telefono" class="form-control"
                value="{{ old('telefono', $proveedor->telefono ?? '') }}">
     </div>
@@ -24,7 +24,7 @@
     </div>
 
     <div class="col-md-12 mb-3">
-        <label>DirecciÃ³n</label>
+        <label>Dirección</label>
         <input type="text" name="direccion" class="form-control"
                value="{{ old('direccion', $proveedor->direccion ?? '') }}">
     </div>
@@ -36,7 +36,7 @@
     </div>
 
     <div class="col-md-6 mb-3">
-        <label>TelÃ©fono del contacto</label>
+        <label>Teléfono del contacto</label>
         <input type="text" name="contacto_telefono" class="form-control"
                value="{{ old('contacto_telefono', $proveedor->contacto_telefono ?? '') }}">
     </div>

@@ -3,7 +3,7 @@
 @section('content')
 <div class="container mt-5">
 
-    <h2 class="mb-4">Ã“rdenes de Compra</h2>
+    <h2 class="mb-4">Órdenes de Compra</h2>
 
     <a href="{{ route('admin.ordenes.create') }}" class="btn btn-primary mb-3">
         Crear nueva orden
