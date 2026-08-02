@@ -24,7 +24,10 @@ class Proveedor extends Model
     public function productos()
     {
         return $this->belongsToMany(Producto::class, 'proveedor_producto')
-            ->withPivot('stock_proveedor', 'precio_compra');
+            ->withPivot('stock_proveedor', 'precio_compra')
+            // Sin esto las columnas que añade H-25 al pivot se quedan en NULL:
+            // attach() solo las escribe si la relación las declara.
+            ->withTimestamps();
     }
 
     public function ordenes()
