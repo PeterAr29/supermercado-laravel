@@ -1,37 +1,31 @@
+{{--
+    Barra de la tienda.
+
+    La marca sale de config('app.name') y no escrita a mano: convivían
+    "PlazaKing", "Tattos Market", "Supermercado" y "Laravel" según la
+    pantalla (H-18).
+--}}
 <nav class="bg-white border-b border-gray-200 relative z-50">
-    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center gap-4">
 
-        {{-- IZQUIERDA --}}
-        <div class="flex items-center space-x-4">
+        <button type="button" onclick="alternarMenuCategorias()"
+                class="text-2xl leading-none px-1" aria-label="Categorías">
+            ☰
+        </button>
 
-            {{-- BOTÓN MENÚ --}}
-            <button onclick="toggleMenu()" class="text-2xl">
-                ☰
-            </button>
+        <a href="{{ route('home') }}" class="text-xl font-bold whitespace-nowrap">
+            {{ config('app.name') }}
+        </a>
 
-            {{-- LOGO --}}
-            <a href="{{ route('home') }}" class="text-xl font-bold">
-                Tattos Market
-            </a>
-        </div>
-
-        {{-- BUSCADOR (luego será en tiempo real) --}}
-        <form action="{{ route('productos.index') }}" method="GET" class="flex-1 mx-6">
-            <input
-                type="text"
-                name="buscar"
-                value="{{ request('buscar') }}"
-                placeholder="Buscar productos..."
-                class="w-full border rounded px-4 py-2 focus:outline-none focus:ring focus:border-red-500"
-            >
+        <form action="{{ route('productos.index') }}" method="GET" class="flex-1 min-w-0">
+            <input type="text" name="buscar" value="{{ request('buscar') }}"
+                   placeholder="Buscar productos..."
+                   class="w-full border rounded px-4 py-2 focus:outline-none focus:ring focus:border-red-500">
         </form>
 
+        <div class="flex items-center gap-4 text-sm whitespace-nowrap">
 
-        {{-- DERECHA --}}
-        <div class="flex items-center space-x-5">
-
-            {{-- CARRITO --}}
-            <a href="{{ route('carrito.index') }}" class="relative text-xl">
+            <a href="{{ route('carrito.index') }}" class="relative text-xl" aria-label="Carrito">
                 🛒
                 @if($carritoCount > 0)
                     <span class="absolute -top-2 -right-2 bg-red-600 text-white text-xs px-2 rounded-full">
@@ -41,19 +35,15 @@
             </a>
 
             @auth
-                {{--
-                    El enlace al panel solo existe para quien tiene rol de
-                    administrador. Un cliente no ve ningún enlace de gestión:
-                    hasta la Fase 3 los veía todos, y además funcionaban (H-14).
-                --}}
+                {{-- El enlace al panel solo existe para el administrador (H-14) --}}
                 @if(auth()->user()->esAdmin())
                     <a href="{{ route('admin.dashboard') }}"
-                       class="bg-gray-900 text-white px-3 py-1.5 rounded text-sm hover:bg-gray-700">
+                       class="bg-gray-900 text-white px-3 py-1.5 rounded hover:bg-gray-700">
                         Panel
                     </a>
                 @endif
 
-                <a href="{{ route('mis-pedidos.index') }}" class="text-gray-700 hover:text-black">
+                <a href="{{ route('mis-pedidos.index') }}" class="text-gray-700 hover:text-black hidden sm:inline">
                     Mis pedidos
                 </a>
 
@@ -63,24 +53,23 @@
 
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button class="text-gray-700 hover:text-black">
-                        Cerrar sesión
-                    </button>
+                    <button class="text-gray-700 hover:text-black">Cerrar sesión</button>
                 </form>
             @else
-                <a href="{{ route('login') }}" class="text-gray-700 hover:text-black">Login</a>
+                <a href="{{ route('login') }}" class="text-gray-700 hover:text-black">Entrar</a>
                 <a href="{{ route('register') }}" class="text-gray-700 hover:text-black">Registro</a>
             @endauth
         </div>
     </div>
 </nav>
 
-<!-- MENÚ LATERAL -->
-<div id="menuLateral"
+{{-- MENÚ LATERAL DE CATEGORÍAS --}}
+<div id="menu-categorias"
      class="fixed top-0 left-0 w-64 h-full bg-white shadow-lg transform -translate-x-full transition-transform z-50">
 
-    <div class="p-4 border-b font-bold text-lg">
+    <div class="p-4 border-b font-bold text-lg flex items-center justify-between">
         Categorías
+        <button type="button" onclick="alternarMenuCategorias()" class="text-gray-400 hover:text-black">✕</button>
     </div>
 
     <ul>
@@ -95,15 +84,14 @@
     </ul>
 </div>
 
-<!-- OVERLAY -->
-<div id="overlay"
-     class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"
-     onclick="toggleMenu()"></div>
+<div id="fondo-menu" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"
+     onclick="alternarMenuCategorias()"></div>
 
-
+@push('scripts')
 <script>
-    function toggleMenu() {
-        document.getElementById('menuLateral').classList.toggle('-translate-x-full');
-        document.getElementById('overlay').classList.toggle('hidden');
+    function alternarMenuCategorias() {
+        document.getElementById('menu-categorias').classList.toggle('-translate-x-full');
+        document.getElementById('fondo-menu').classList.toggle('hidden');
     }
 </script>
+@endpush
