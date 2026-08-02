@@ -15,7 +15,7 @@ Cada fase tiene **objetivo**, **alcance cerrado**, **checklist** y **criterio de
 | 3 | Paneles y roles | [#11](https://github.com/PeterAr29/supermercado-laravel/issues/11) ✅ | H-14, H-21, H-35, H-39…H-44 |
 | 4 | Separación de capas (MVC real) | [#4](https://github.com/PeterAr29/supermercado-laravel/issues/4) ✅ | H-12, H-13, H-19, H-20, H-45, H-46 |
 | 5 | Capa de presentación | [#5](https://github.com/PeterAr29/supermercado-laravel/issues/5) ✅ | H-15…H-18, H-43, H-47 |
-| 6 | Robustez y calidad | [#6](https://github.com/PeterAr29/supermercado-laravel/issues/6) | H-22, H-23, H-24, H-34 |
+| 6 | Robustez y calidad | [#6](https://github.com/PeterAr29/supermercado-laravel/issues/6) ✅ | H-22, H-23, H-24, H-34 |
 | — | Decisión sobre carpeta anidada | [#7](https://github.com/PeterAr29/supermercado-laravel/issues/7) | H-27 |
 
 ### Cambio de plan — 2026-08-01
@@ -403,26 +403,60 @@ y solo porque romperlo del todo fue más ruidoso que dejarlo a medias.
 
 ---
 
-## Fase 6 — Robustez y calidad ⬜
+## Fase 6 — Robustez y calidad ✅
 
 **Objetivo:** que aguante datos y uso reales.
 
 > Antes era la Fase 5. H-21 sale de aquí: Google Sheets se retira en la Fase 3 en lugar de arreglarse.
 
 ### Checklist
-- [ ] Paginación en productos y proveedores *(H-22)*
-- [ ] Factories de `Producto`, `Categoria`, `Proveedor` *(H-23; los seeders ya están hechos)*
-- [ ] Copia de seguridad previa a cada fase, automatizada *(H-34)*
-- [ ] Tests de feature *(H-24)*:
-  - [ ] agregar al carrito
-  - [ ] el checkout descuenta stock y registra el movimiento
-  - [ ] recibir una orden repone stock y registra el movimiento
-  - [ ] un invitado no puede borrar productos
-  - [ ] un cliente no puede entrar en `/admin`
-- [ ] `php artisan pint` sobre todo el código
+- [x] Paginación en productos y proveedores *(H-22)*
+- [x] Factories de `Producto`, `Categoria`, `Proveedor` *(H-23; los seeders ya están hechos)*
+- [x] Copia de seguridad previa a cada fase, automatizada *(H-34)*
+- [x] Tests de feature *(H-24)*:
+  - [x] agregar al carrito
+  - [x] el checkout descuenta stock y registra el movimiento
+  - [x] recibir una orden repone stock y registra el movimiento
+  - [x] un invitado no puede borrar productos
+  - [x] un cliente no puede entrar en `/admin`
+- [x] Pint sobre todo el código — con `./vendor/bin/pint`, no `php artisan pint`
 
-### Criterio de aceptación
+### Criterio de aceptación — ✅ cumplido
 `php artisan migrate:fresh --seed` deja una base usable. `php artisan test` pasa en verde con al menos 5 tests de dominio nuevos.
+
+**Verificado el 2026-08-02:**
+
+1. `migrate:fresh --seed` — ejecutado contra `laravel_testing`, no contra la base
+   de desarrollo: son las mismas migraciones y los mismos seeders, y así el
+   criterio se comprueba sin arriesgar los datos. Deja 2 usuarios, 8 categorías,
+   40 productos, 6 proveedores y el kardex de apertura de los 40.
+2. `php artisan test` — **49 pasan, 128 aserciones, 0 fallos.** Eran 25.
+   **24 tests nuevos**, casi cinco veces el mínimo pedido.
+3. `./vendor/bin/pint --test` — 163 archivos, sin cambios pendientes.
+4. `php artisan db:respaldo` — volcado de 16 tablas con los acentos intactos;
+   comprobados el aviso al existir ya el fichero, `--forzar` y el nombre con
+   fecha cuando no se indica fase.
+
+### Lo que no era lo que ponía en el papel
+
+Media checklist estaba hecha sin que el roadmap lo supiera:
+
+- **La paginación del panel** (H-22) llegó con la Fase 4. Lo que seguía trayendo
+  el catálogo entero era la **tienda**, que es justo la parte con miles de SKU.
+- **`DatabaseSeeder`** (H-23) dejó de estar vacío al repoblar el catálogo tras
+  H-33. Faltaban solo las factories.
+
+Los dos huecos se cerraron **de paso**, en fases cuyo alcance era otro, y nadie
+volvió a tocar el roadmap. Es la otra cara de "nada se arregla de paso": cuando
+se arregla igualmente, hay que escribirlo, o la fase siguiente empieza a trabajar
+sobre un mapa que ya no es el terreno.
+
+### Hallazgos nuevos descubiertos durante la fase
+
+Ninguno de código. Sí una corrección de documentación: `04-CONVENCIONES.md` pedía
+`php artisan pint` desde la Fase 0, y ese comando no existe — Pint es un binario.
+El paso 3 del cierre de fase llevaba seis fases sin poder ejecutarse tal y como
+estaba escrito.
 
 ---
 

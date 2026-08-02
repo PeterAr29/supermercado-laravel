@@ -165,11 +165,34 @@ convierte el tablero en decoración.
 
 1. **Volcado de la base de desarrollo.** Git versiona el código, no los datos:
    ```
-   C:/xampp/mysql/bin/mysqldump.exe -u root laravel > backup_pre_fase_N.sql
+   php artisan db:respaldo --fase=N
    ```
+   Deja `backup_pre_fase_N.sql` en la raíz, que `.gitignore` excluye. No pisa un
+   volcado existente salvo con `--forzar`. Se automatizó en la Fase 6 (H-34)
+   porque la versión anterior era una línea de `mysqldump` copiada a mano de
+   este mismo documento, y el paso que se copia a mano es el que se olvida.
 2. **Comprobar a qué base apunta la suite de tests** (`phpunit.xml`) antes de ejecutarla
    por primera vez. `RefreshDatabase` hace `migrate:fresh`: si apunta a la base de
    desarrollo, la borra entera sin avisar (H-33).
+
+## 7 bis. Tests
+
+- **Un test afirma algo del resultado, no que la petición no reventó.** `assertOk()`
+  a secas no es una comprobación: una pantalla en blanco y una con la codificación
+  destrozada responden `200` igual (H-45, H-47). Si la prueba mira una pantalla,
+  que mire **lo que tiene que aparecer en el HTML**
+- **Cada arreglo de un hallazgo con id deja su test**, y el test lleva el id en un
+  comentario. Sirve para saber, al leerlo dentro de un año, qué se está impidiendo
+  que vuelva a pasar
+- **Nombres de test en español y en frase completa**: `test_una_orden_no_se_puede_recibir_dos_veces`.
+  Lo que sale por consola al fallar es la frase, y esa frase debería bastar para
+  entender qué se rompió
+- **Los datos de prueba salen de factories, no de seeders.** Un test que depende
+  del catálogo del seeder se cae el día que el catálogo cambie. Los estados con
+  nombre (`conStock(3)`, `retirado()`, `admin()`) dicen en la propia llamada qué
+  caso se está montando
+- `RefreshDatabase` en todo test que toque la base. Y **comprobar a qué base
+  apunta la suite** antes de estrenarla en una máquina nueva (H-33)
 
 ## 8. Antes de dar una fase por terminada
 
@@ -181,7 +204,8 @@ convierte el tablero en decoración.
    se pintaba **vacío** y respondía `200`, con un test en verde durante meses). Toda
    comprobación de una pantalla afirma algo **que tiene que aparecer en el HTML**.
 2. `php artisan test` pasa.
-3. `php artisan pint` ejecutado.
+3. `./vendor/bin/pint` ejecutado. **No es `php artisan pint`**: Pint es un binario,
+   no un comando de Artisan, y `php artisan pint` responde "Command not defined".
 4. Los hallazgos cerrados se marcan en `02-HALLAZGOS.md`.
 5. Hallazgos nuevos descubiertos por el camino: **se anotan, no se arreglan** en la fase en curso.
 6. **Repasar la checklist de la issue una por una** y marcar solo lo hecho. Lo que
