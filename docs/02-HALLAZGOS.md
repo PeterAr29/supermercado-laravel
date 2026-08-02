@@ -20,10 +20,10 @@ Auditoría del 2026-08-01 sobre `routes/`, 8 controladores de dominio, 10 modelo
 | H-12 | 🟠 | Capas | Sin Form Requests: validación duplicada en cada `store`/`update` | 4 |
 | H-13 | 🟠 | Capas | Sin capa de servicios: lógica de negocio en controladores y vistas | 4 |
 | H-14 | 🔴 | Seguridad | Sin roles: **cualquier registrado es administrador** | 3 ✅ |
-| H-15 | 🟡 | Vistas | Cuatro sistemas de layout coexistiendo | 5 |
-| H-16 | 🟡 | Vistas | Se usan clases Bootstrap pero Bootstrap nunca se carga | 5 |
-| H-17 | 🟡 | Build | Tailwind por CDN; Vite configurado pero sin usar | 5 |
-| H-18 | 🟡 | Vistas | Marca inconsistente: "PlazaKing" vs "Tattos Market" | 5 |
+| H-15 | 🟡 | Vistas | Cuatro sistemas de layout coexistiendo | 5 ✅ |
+| H-16 | 🟡 | Vistas | Se usan clases Bootstrap pero Bootstrap nunca se carga | 5 ✅ |
+| H-17 | 🟡 | Build | Tailwind por CDN; Vite configurado pero sin usar | 5 ✅ |
+| H-18 | 🟡 | Vistas | Marca inconsistente: "PlazaKing" vs "Tattos Market" | 5 ✅ |
 | H-19 | 🟡 | Rutas | Rutas duplicadas y sin agrupar en `web.php` | 4 |
 | H-20 | 🟡 | Capas | Route model binding inconsistente | 4 |
 | H-21 | 🟡 | Arquitectura | Google Sheets: tercera fuente de proveedores, se retira | 3 ✅ |
@@ -52,6 +52,7 @@ Auditoría del 2026-08-01 sobre `routes/`, 8 controladores de dominio, 10 modelo
 | H-44 | 🔴 | Bug | Editar un proveedor devolvía 500: el binding nunca resolvía | 3 ✅ |
 | H-45 | 🟠 | Regresión | El refactor de la Fase 3 rompió la codificación de 4 vistas | 4 ✅ |
 | H-46 | 🟡 | Bug | El RUC del proveedor no era único ni tenía longitud | 4 ✅ |
+| H-47 | 🔴 | Bug | El perfil y el dashboard se pintaban vacíos | 5 ✅ |
 
 ---
 
@@ -306,6 +307,31 @@ Lo que hace que esto sea instructivo no es el fallo, sino **por qué pasó la ve
 No llegó a ocurrir —los 6 proveedores existentes tienen los 11 dígitos y ninguno repetido, comprobado antes de imponer la regla— pero nada lo impedía.
 
 **Arreglo (Fase 4):** `digits:11` y `Rule::unique`, con `ignore()` en la edición para que guardar sin tocar nada no choque contra su propia fila.
+
+### H-47 — El perfil y el dashboard se pintaban vacíos
+**Descubierto en la Fase 5, al romperse un test que llevaba meses en verde.** *(Resuelto en la Fase 5.)*
+
+**Dónde:** `app/View/Components/AppLayout.php` · `profile/edit.blade.php` · `dashboard.blade.php`
+
+```php
+// AppLayout::render()
+return view('layouts.layout');   // ...que solo tenía @yield('content')
+```
+
+`<x-app-layout>` es un **componente**: su contenido viaja en `{{ $slot }}`. Pero `layouts.layout` era un layout de herencia y solo imprimía `@yield('content')`, que en esas dos pantallas no lo rellenaba nadie.
+
+Resultado: `/profile` y `/dashboard` devolvían **la barra de navegación y nada más**. Ni el formulario de datos, ni el de contraseña, ni el de borrar la cuenta. Las tres pantallas de perfil que la Fase 1 dio por arregladas con H-31 —«las rutas nunca se registraron, `/profile` daba 404»— pasaron de dar 404 a dar 200 en blanco.
+
+**Cómo se descubrió, que es lo interesante:** al borrar `layouts.layout` en esta fase, `ProfileTest` pasó de verde a un 500. El test dice:
+
+```php
+$response = $this->actingAs($user)->get('/profile');
+$response->assertOk();
+```
+
+Comprobaba el código de estado. Una página vacía devuelve `200`, así que el test llevaba meses confirmando que la pantalla *respondía* mientras no mostraba nada. Es la misma lección que H-45, por tercera vez.
+
+**Arreglo (Fase 5):** `layouts/app.blade.php`, versión de componente del layout de tienda, que sí imprime `{{ $slot }}`. La verificación de la fase comprueba que el formulario aparece en el HTML, no que la ruta responda.
 
 ### H-35 — Las ventas no descuentan stock
 **Descubierto al replantear el roadmap (2026-08-01).** *(Asignado a la Fase 3.)*

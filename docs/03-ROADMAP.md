@@ -14,7 +14,7 @@ Cada fase tiene **objetivo**, **alcance cerrado**, **checklist** y **criterio de
 | 2 | Dominio unificado | [#3](https://github.com/PeterAr29/supermercado-laravel/issues/3) ✅ | H-08…H-11, H-25, H-36…H-38 |
 | 3 | Paneles y roles | [#11](https://github.com/PeterAr29/supermercado-laravel/issues/11) ✅ | H-14, H-21, H-35, H-39…H-44 |
 | 4 | Separación de capas (MVC real) | [#4](https://github.com/PeterAr29/supermercado-laravel/issues/4) ✅ | H-12, H-13, H-19, H-20, H-45, H-46 |
-| 5 | Capa de presentación | [#5](https://github.com/PeterAr29/supermercado-laravel/issues/5) | H-15…H-18 |
+| 5 | Capa de presentación | [#5](https://github.com/PeterAr29/supermercado-laravel/issues/5) ✅ | H-15…H-18, H-43, H-47 |
 | 6 | Robustez y calidad | [#6](https://github.com/PeterAr29/supermercado-laravel/issues/6) | H-22, H-23, H-24, H-34 |
 | — | Decisión sobre carpeta anidada | [#7](https://github.com/PeterAr29/supermercado-laravel/issues/7) | H-27 |
 
@@ -350,7 +350,7 @@ en la lista: salió de bajar `DashboardController::index` de 27 líneas a 3.
 
 ---
 
-## Fase 5 — Capa de presentación ⬜
+## Fase 5 — Capa de presentación ✅
 
 **Objetivo:** un solo sistema visual. Hoy hay siete pantallas literalmente sin estilos.
 
@@ -365,8 +365,41 @@ en la lista: salió de bajar `DashboardController::index` de 27 líneas a 3.
 - [ ] Componentes Blade: `<x-producto-card>`, `<x-alerta-flash>`, `<x-tabla>` (hoy duplicados en 6 vistas)
 - [x] ~~Sacar el cálculo de totales de `carrito/index.blade.php`~~ — hecho en la Fase 4
 
-### Criterio de aceptación
+### Criterio de aceptación — ✅ cumplido
 `npm run build` genera los assets, ninguna vista referencia un CDN, y las siete pantallas de proveedores/órdenes se ven con estilos.
+
+**Verificado el 2026-08-02 sobre el HTML de 26 pantallas, no sobre su código de estado.**
+Esa es la diferencia con las fases anteriores, y viene de H-45 y H-47: una página
+rota responde `200` igual que una buena.
+
+| Comprobación | Antes | Después |
+|---|---|---|
+| Cabeceras `<head>` distintas | 5 | **1** |
+| Pantallas con clases de Bootstrap sin cargar Bootstrap | 10 | **0** |
+| Referencias a un CDN | 8 | **0** |
+| Marcas conviviendo | 4 | **1**, desde `config('app.name')` |
+
+**Contra MySQL real: 215 comprobaciones, 0 fallos.**
+- Fase 5: **51** — CDN, CSS del bundle, clases de Bootstrap, acentos, marca,
+  contenido presente y `<!DOCTYPE>` único, sobre 26 pantallas
+- No-regresión de las fases 1-4: **164**
+
+`php artisan test`: **25 pasan, 0 fallan**.
+
+### Hallazgos nuevos descubiertos durante la fase
+
+| ID | Qué era | Impacto real |
+|---|---|---|
+| H-47 | `AppLayout` apuntaba a un layout que nunca imprimía `$slot` | **`/profile` y `/dashboard` se pintaban vacíos**: barra de navegación y nada más |
+
+Y se cerró del todo **H-43**, que la Fase 3 dio por resuelto arreglando la ficha
+de producto: el home repetía el mismo fallo y el botón "Agregar" de los productos
+destacados tampoco funcionaba.
+
+**Lectura de fondo, la tercera vez que aparece la misma:** H-47 llevaba meses
+oculto detrás de un test en verde que solo comprobaba `assertOk()`. Una pantalla
+vacía responde `200`. El fallo salió al borrar el layout viejo, no al probarlo —
+y solo porque romperlo del todo fue más ruidoso que dejarlo a medias.
 
 ---
 

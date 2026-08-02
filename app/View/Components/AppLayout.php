@@ -8,10 +8,11 @@ use Illuminate\View\View;
 class AppLayout extends Component
 {
     /**
-     * Get the view / contents that represents the component.
+     * Apuntaba a 'layouts.layout', que solo tenía `@yield('content')` y nunca
+     * imprimía `$slot`: el perfil y el dashboard salían vacíos (H-47).
      */
     public function render(): View
     {
-        return view('layouts.layout');
+        return view('layouts.app');
     }
 }
