@@ -1,14 +1,10 @@
-@extends('layouts.layout')
+@extends('layouts.tienda')
 
 @section('content')
 
 <div class="max-w-4xl mx-auto px-4">
 
     <h1 class="text-2xl font-bold mb-6">Mis pedidos</h1>
-
-    @if(session('error'))
-        <div class="bg-red-100 text-red-800 p-3 mb-4 rounded">{{ session('error') }}</div>
-    @endif
 
     <div class="bg-white rounded-lg shadow overflow-hidden">
         <table class="w-full text-sm">

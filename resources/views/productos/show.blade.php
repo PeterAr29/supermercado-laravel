@@ -1,4 +1,4 @@
-@extends('layouts.layout')
+@extends('layouts.tienda')
 
 @section('content')
 
@@ -139,31 +139,11 @@
         <div class="mt-12">
             <h2 class="text-xl font-bold mb-6">Productos similares</h2>
 
+            {{-- La misma tarjeta que el home: estaba duplicada con otra
+                 maquetación y otro botón (H-16) --}}
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
                 @foreach($productosSimilares as $item)
-                    <div class="bg-white rounded-xl shadow hover:shadow-lg transition p-4">
-
-                        <img
-                            src="{{ $item->imagen }}"
-                            class="w-full h-40 object-cover rounded-lg"
-                            alt="{{ $item->nombre }}"
-                        >
-
-                        <h3 class="font-semibold mt-3 text-sm">
-                            {{ $item->nombre }}
-                        </h3>
-
-                        <p class="text-red-600 font-bold mt-1">
-                            S/ {{ number_format($item->precio, 2) }}
-                        </p>
-
-                        <a
-                            href="{{ route('productos.show', $item->id) }}"
-                            class="block text-center mt-3 text-sm text-white bg-red-600 hover:bg-red-700 py-2 rounded-lg"
-                        >
-                            Ver producto
-                        </a>
-                    </div>
+                    <x-producto-card :producto="$item" />
                 @endforeach
             </div>
         </div>
