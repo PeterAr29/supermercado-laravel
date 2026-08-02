@@ -3,10 +3,16 @@
 @section('content')
 <div class="max-w-7xl mx-auto mt-10">
 
-    {{-- MENSAJE --}}
+    {{-- MENSAJES --}}
     @if(session('success'))
         <div class="bg-green-200 text-green-800 p-3 mb-4 rounded">
             {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="bg-red-200 text-red-800 p-3 mb-4 rounded">
+            {{ session('error') }}
         </div>
     @endif
 
@@ -41,13 +47,23 @@
         <div class="col-span-9">
 
             {{-- ENCABEZADO --}}
+            {{--
+                El botón "+ Nuevo producto" ya no está aquí: crear, editar y
+                retirar se hace en /admin/productos, y esta pantalla es la
+                tienda. Antes cualquier registrado veía los botones de gestión
+                sobre el catálogo público (H-14).
+            --}}
             <div class="flex justify-between items-center mb-4">
-                <h1 class="text-2xl font-bold">Lista de Productos</h1>
+                <h1 class="text-2xl font-bold">Productos</h1>
 
-                <a href="{{ route('productos.create') }}"
-                   class="bg-blue-600 text-white px-4 py-2 rounded">
-                    + Nuevo Producto
-                </a>
+                @auth
+                    @if(auth()->user()->esAdmin())
+                        <a href="{{ route('admin.productos.index') }}"
+                           class="text-sm text-gray-600 hover:underline">
+                            Gestionar el catálogo →
+                        </a>
+                    @endif
+                @endauth
             </div>
 
         
@@ -60,6 +76,7 @@
                             <th class="p-3">Nombre</th>
                             <th class="p-3">Precio</th>
                             <th class="p-3">Categoría</th>
+                            <th class="p-3">Disponible</th>
                             <th class="p-3 text-center">Acciones</th>
                         </tr>
                     </thead>
@@ -88,26 +105,17 @@
                                     {{ $producto->categoria->nombre ?? 'Sin categoría' }}
                                 </td>
 
-                                <td class="p-3 text-center space-x-1">
+                                {{-- Decirlo aquí evita que el cliente descubra
+                                     que no hay stock al llegar a la caja (H-35) --}}
+                                <td class="p-3">
+                                    @if($producto->stock > 0)
+                                        <span class="text-green-700">{{ $producto->stock }} {{ $producto->unidad_medida->sufijo() }}</span>
+                                    @else
+                                        <span class="text-gray-500">Agotado</span>
+                                    @endif
+                                </td>
 
-                                    {{-- EDITAR --}}
-                                    <a href="{{ route('productos.edit', $producto) }}"
-                                       onclick="event.stopPropagation()"
-                                       class="bg-yellow-500 text-white px-3 py-1 rounded">
-                                        Editar
-                                    </a>
-
-                                    {{-- ELIMINAR --}}
-                                    <form action="{{ route('productos.destroy', $producto) }}"
-                                          method="POST"
-                                          class="inline"
-                                          onclick="event.stopPropagation()">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button class="bg-red-600 text-white px-3 py-1 rounded">
-                                            Eliminar
-                                        </button>
-                                    </form>
+                                <td class="p-3 text-center">
 
                                     {{-- CARRITO --}}
                                     <form action="{{ route('carrito.agregar') }}"
@@ -116,7 +124,8 @@
                                           onclick="event.stopPropagation()">
                                         @csrf
                                         <input type="hidden" name="producto_id" value="{{ $producto->id }}">
-                                        <button class="bg-green-600 text-white px-3 py-1 rounded">
+                                        <button class="bg-green-600 text-white px-3 py-1 rounded disabled:bg-gray-300"
+                                                @disabled($producto->stock <= 0)>
                                             Agregar
                                         </button>
                                     </form>
@@ -125,7 +134,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center p-6 text-gray-500">
+                                <td colspan="6" class="text-center p-6 text-gray-500">
                                     No se encontraron productos
                                 </td>
                             </tr>

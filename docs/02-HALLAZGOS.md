@@ -47,6 +47,9 @@ Auditoría del 2026-08-01 sobre `routes/`, 8 controladores de dominio, 10 modelo
 | H-39 | 🟠 | Esquema | Un usuario puede acabar con dos carritos a la vez | 3 |
 | H-40 | 🟡 | Bug | Asignar dos veces el mismo producto a un proveedor devuelve 500 | 3 |
 | H-41 | 🟢 | Bug | El carrito acepta productos ya retirados del catálogo | 3 |
+| H-42 | 🟠 | Bug | El formulario de producto nunca enviaba el stock | 3 |
+| H-43 | 🟠 | Bug | El botón "Agregar al carrito" de la ficha nunca funcionó | 3 |
+| H-44 | 🔴 | Bug | Editar un proveedor devolvía 500: el binding nunca resolvía | 3 |
 
 ---
 
@@ -203,6 +206,66 @@ Que la base lo rechace es lo correcto; lo que falta es que el controlador lo pre
 El resultado es un mensaje que miente: sale "Producto agregado al carrito" y el carrito sigue igual. No es peligroso — H-32 ya impide que se pague — pero es exactamente el tipo de incoherencia que hace dudar de si la aplicación funciona.
 
 **Arreglo (Fase 3):** `Rule::exists('productos', 'id')->whereNull('deleted_at')`.
+
+### H-42 — El formulario de producto nunca enviaba el stock
+**Descubierto al construir el panel de administración (Fase 3).** *(Resuelto en la Fase 3.)*
+
+**Dónde:** `productos/create.blade.php` · `productos/edit.blade.php` · `ProductoController::store`
+
+El campo `stock` existía en `$fillable` desde H-03, pero **ningún formulario lo enviaba y ningún controlador lo recogía**. Todo producto dado de alta desde la aplicación nacía con 0 unidades:
+
+```php
+Producto::create([
+    'nombre' => $request->nombre,
+    // ...ni 'stock' ni 'stock_minimo'
+]);
+```
+
+La única forma de que un producto tuviera existencias era el seeder o tocar la base a mano. Es el mismo patrón de H-38: un campo que existe en el modelo, no existe en el formulario, y nadie se entera porque no falla — simplemente se queda a cero.
+
+**Arreglo (Fase 3):** `stock` y `stock_minimo` en el formulario de alta y en la validación. Al **editar** no aparecen: el stock solo se mueve con un ajuste que exige motivo (H-35), y el alta llama a `InventarioService::conciliar()` para abrir el kardex.
+
+### H-43 — El botón "Agregar al carrito" de la ficha nunca funcionó
+**Descubierto al construir el panel de administración (Fase 3).** *(Resuelto en la Fase 3.)*
+
+**Dónde:** `resources/views/productos/show.blade.php`
+
+```blade
+<form action="{{ route('carrito.agregar', $producto->id) }}" method="POST">
+    @csrf
+    <button>Agregar al carrito</button>   {{-- sin producto_id --}}
+</form>
+```
+
+`carrito.agregar` no recibe parámetros de ruta, así que el id se añadía como query string y **el formulario no enviaba `producto_id`**. La validación lo rechazaba y el usuario volvía a la ficha sin nada en el carrito y sin mensaje.
+
+El botón equivalente del listado sí llevaba su `<input type="hidden">`, y por eso el fallo pasó desapercibido: el flujo *sí* funcionaba, pero solo desde una de las dos pantallas.
+
+**Arreglo (Fase 3):** el id va en un campo del formulario, como en el listado.
+
+### H-44 — Editar un proveedor devolvía 500: el binding nunca resolvía
+**Descubierto al mover los proveedores a `/admin` (Fase 3).** *(Resuelto en la Fase 3.)*
+
+**Dónde:** `routes/web.php` · `ProveedorController::{edit,update,destroy}`
+
+`Route::resource('proveedores', ...)` genera el parámetro **`{proveedore}`**: Laravel singulariza en inglés, igual que pluralizaba `Proveedor` como `proveedors` en H-29. El controlador declara `edit(Proveedor $proveedor)`, y el binding implícito casa **por nombre**:
+
+```
+Ruta:       /proveedores/{proveedore}
+Argumento:  Proveedor $proveedor      ← no coinciden
+```
+
+Al no encontrarlo, Laravel no falla: resuelve el argumento desde el contenedor y entrega un **modelo vacío**. La vista intenta entonces `route('proveedores.update', $proveedor)` sin id y revienta:
+
+```
+Missing required parameter for [Route: proveedores.update] [URI: proveedores/{proveedore}]
+```
+
+`update()` y `destroy()` son peores que un 500: reciben un modelo sin id y **no actualizan ni borran nada, sin avisar**.
+
+Esto era anterior a la Fase 3. La Fase 1 dio por bueno el CRUD de proveedores porque su criterio de aceptación comprobaba crear y listar, no editar.
+
+**Arreglo (Fase 3):** `->parameters(['proveedores' => 'proveedor'])`. Tercera vez que el proyecto paga por dejar que el framework adivine plurales en español (H-29, H-30, esta).
 
 ### H-35 — Las ventas no descuentan stock
 **Descubierto al replantear el roadmap (2026-08-01).** *(Asignado a la Fase 3.)*

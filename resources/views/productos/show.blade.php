@@ -48,15 +48,31 @@
                 ></textarea>
             </div>
 
+            {{-- DISPONIBILIDAD --}}
+            <p class="mt-4 text-sm">
+                @if($producto->stock > 0)
+                    <span class="text-green-700 font-medium">
+                        {{ $producto->stock }} {{ $producto->unidad_medida?->sufijo() ?? 'und' }} disponibles
+                    </span>
+                @else
+                    <span class="text-gray-500 font-medium">Agotado</span>
+                @endif
+            </p>
+
             {{-- BOTÓN --}}
-            <form
-                action="{{ route('carrito.agregar', $producto->id) }}"
-                method="POST"
-                class="mt-6"
-            >
+            {{--
+                El id del producto va en un campo del formulario, no en la URL:
+                'carrito.agregar' no recibe parámetros de ruta, así que el id se
+                perdía y la validación rechazaba el envío. Este botón nunca
+                llegó a funcionar (H-43).
+            --}}
+            <form action="{{ route('carrito.agregar') }}" method="POST" class="mt-6">
                 @csrf
+                <input type="hidden" name="producto_id" value="{{ $producto->id }}">
+
                 <button
-                    class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-full transition"
+                    class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-full transition disabled:bg-gray-300"
+                    @disabled($producto->stock <= 0)
                 >
                     Agregar al carrito
                 </button>
@@ -86,20 +102,23 @@
                 <p class="text-gray-600">{{ config('app.name') }}</p>
             </div>
 
+            {{--
+                Proveedores desde la base de datos. Antes venían de una hoja de
+                Google publicada, con nombres de campo propios: la BD es la
+                única fuente desde la Fase 3 (H-21).
+            --}}
             <div class="bg-gray-50 rounded-xl p-4">
                 <h4 class="font-semibold">Proveedores</h4>
 
-                @if(!empty($proveedores) && count($proveedores))
-                    <ul class="mt-2 space-y-1 text-sm text-gray-600">
-                        @foreach($proveedores as $proveedor)
-                            <li>• {{ $proveedor['proveedor_nombre'] }}</li>
-                        @endforeach
-                    </ul>
-                @else
+                @forelse($proveedores as $proveedor)
+                    @if($loop->first)<ul class="mt-2 space-y-1 text-sm text-gray-600">@endif
+                        <li>• {{ $proveedor->nombre }}</li>
+                    @if($loop->last)</ul>@endif
+                @empty
                     <p class="text-sm text-gray-500 mt-2">
                         No hay proveedores disponibles
                     </p>
-                @endif
+                @endforelse
             </div>
 
             <div class="bg-gray-50 rounded-xl p-4">

@@ -1,71 +1,92 @@
 <?php
 
-use App\Http\Controllers\CarritoController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\OrdenCompraController;
-use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\InventarioController;
+use App\Http\Controllers\Admin\OrdenCompraController;
+use App\Http\Controllers\Admin\ProductoController as AdminProductoController;
+use App\Http\Controllers\Admin\ProveedorController;
+use App\Http\Controllers\Admin\ProveedorProductoController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ProveedorController;
-use App\Http\Controllers\ProveedorProductoController;
-use App\Http\Controllers\ProveedorSheetController;
+use App\Http\Controllers\Tienda\CarritoController;
+use App\Http\Controllers\Tienda\HomeController;
+use App\Http\Controllers\Tienda\MiCuentaController;
+use App\Http\Controllers\Tienda\ProductoController;
+use App\Http\Controllers\Tienda\VentaController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Zona de gestión — requiere sesión iniciada Y rol de administrador
+| Panel de administración — /admin
 |--------------------------------------------------------------------------
-| Se declara ANTES que la zona pública a propósito: 'productos/create' debe
-| registrarse antes que 'productos/{producto}', o la segunda capturaría la
-| palabra "create" como si fuera un id.
+| Toda la gestión cuelga de aquí desde la Fase 3. Antes vivía en la raíz,
+| mezclada con la tienda, y bastaba con registrarse para entrar (H-14).
 |
-| Hasta la Fase 3 aquí solo había 'auth': cualquiera que se registrara podía
-| borrar el catálogo (H-14). El grupo pasa a exigir además el rol.
+| El middleware 'admin' va siempre detrás de 'auth': primero identificarse,
+| después comprobar el rol.
 */
 
-Route::middleware(['auth', 'admin'])->group(function () {
+Route::middleware(['auth', 'admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
 
-    // Productos — todo salvo consultar
-    Route::resource('productos', ProductoController::class)->except(['index', 'show']);
+        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Proveedores — sin 'show': no existe ficha de detalle y el resource
-    // registraba una ruta que reventaba con 500 (H-07).
-    Route::resource('proveedores', ProveedorController::class)->except(['show']);
+        // Catálogo — sin 'show': la ficha pública ya existe en la tienda
+        Route::resource('productos', AdminProductoController::class)->except(['show']);
 
-    // Productos por proveedor (N:N)
-    Route::prefix('proveedores/{proveedor}')->name('proveedor.productos.')->group(function () {
-        Route::get('productos', [ProveedorProductoController::class, 'index'])->name('index');
-        Route::get('productos/asignar', [ProveedorProductoController::class, 'create'])->name('create');
-        Route::post('productos/asignar', [ProveedorProductoController::class, 'store'])->name('store');
-        Route::get('productos/{producto}/editar', [ProveedorProductoController::class, 'edit'])->name('edit');
-        Route::put('productos/{producto}', [ProveedorProductoController::class, 'update'])->name('update');
-        Route::delete('productos/{producto}', [ProveedorProductoController::class, 'destroy'])->name('destroy');
+        // Proveedores — sin 'show': no existe ficha de detalle y el resource
+        // registraba una ruta que reventaba con 500 (H-07).
+        //
+        // parameters() no es cosmético: Laravel singulariza 'proveedores' como
+        // '{proveedore}', que no casa con el argumento `Proveedor $proveedor`
+        // del controlador. El binding no se resolvía, llegaba un modelo vacío y
+        // editar un proveedor devolvía 500 (H-44). Mismo error que H-29, ahora
+        // en las rutas: dejar que el framework adivine el español.
+        Route::resource('proveedores', ProveedorController::class)
+            ->except(['show'])
+            ->parameters(['proveedores' => 'proveedor']);
+
+        // Catálogo de cada proveedor (N:N)
+        Route::prefix('proveedores/{proveedor}')->name('proveedor.productos.')->group(function () {
+            Route::get('productos', [ProveedorProductoController::class, 'index'])->name('index');
+            Route::get('productos/asignar', [ProveedorProductoController::class, 'create'])->name('create');
+            Route::post('productos/asignar', [ProveedorProductoController::class, 'store'])->name('store');
+            Route::get('productos/{producto}/editar', [ProveedorProductoController::class, 'edit'])->name('edit');
+            Route::put('productos/{producto}', [ProveedorProductoController::class, 'update'])->name('update');
+            Route::delete('productos/{producto}', [ProveedorProductoController::class, 'destroy'])->name('destroy');
+        });
+
+        // Órdenes de compra — pasa a Route::resource en la Fase 4 (H-19)
+        Route::get('/ordenes', [OrdenCompraController::class, 'index'])->name('ordenes.index');
+        Route::get('/ordenes/create', [OrdenCompraController::class, 'create'])->name('ordenes.create');
+        Route::post('/ordenes', [OrdenCompraController::class, 'store'])->name('ordenes.store');
+        Route::get('/ordenes/{orden}', [OrdenCompraController::class, 'show'])->name('ordenes.show');
+        Route::post('/ordenes/{orden}/recibir', [OrdenCompraController::class, 'recibir'])->name('ordenes.recibir');
+
+        // AJAX — productos de un proveedor (usado por ordenes/create)
+        // La URL se reorganiza en la Fase 4 (H-19); aquí solo se mueve.
+        Route::get('/proveedor/{id}/productos', [OrdenCompraController::class, 'productosProveedor'])
+            ->name('proveedor.productos.json');
+
+        // Inventario y kardex (H-35)
+        Route::get('/inventario', [InventarioController::class, 'index'])->name('inventario.index');
+        Route::get('/inventario/{producto}', [InventarioController::class, 'show'])->name('inventario.show');
+        Route::post('/inventario/{producto}/ajustar', [InventarioController::class, 'ajustar'])->name('inventario.ajustar');
     });
-
-    // Órdenes de compra
-    Route::get('/ordenes', [OrdenCompraController::class, 'index'])->name('ordenes.index');
-    Route::get('/ordenes/create', [OrdenCompraController::class, 'create'])->name('ordenes.create');
-    Route::post('/ordenes', [OrdenCompraController::class, 'store'])->name('ordenes.store');
-    Route::get('/ordenes/{orden}', [OrdenCompraController::class, 'show'])->name('ordenes.show');
-    Route::post('/ordenes/{orden}/recibir', [OrdenCompraController::class, 'recibir'])->name('ordenes.recibir');
-
-    // AJAX — productos de un proveedor (usado por ordenes/create)
-    // La URL se reorganiza en la Fase 3 (H-19); aquí solo se protege.
-    Route::get('/proveedor/{id}/productos', [OrdenCompraController::class, 'productosProveedor']);
-
-    // Proveedores publicados en Google Sheets
-    Route::get('/proveedores-sheet', [ProveedorSheetController::class, 'index'])->name('proveedores.sheet');
-
-});
 
 /*
 |--------------------------------------------------------------------------
-| Zona autenticada — cualquier rol
+| Zona del usuario — cualquier rol, con sesión iniciada
 |--------------------------------------------------------------------------
-| Perfil y panel de Breeze: son del usuario, no de la gestión. Salen del grupo
-| 'admin' para que un cliente pueda seguir editando sus datos (H-14).
+| Son datos del propio usuario, no de la gestión: un cliente entra aquí.
 */
 
 Route::middleware('auth')->group(function () {
+
+    Route::get('/mi-cuenta', [MiCuentaController::class, 'index'])->name('mi-cuenta');
+    Route::get('/mis-pedidos', [VentaController::class, 'index'])->name('mis-pedidos.index');
+    Route::get('/mis-pedidos/{venta}', [VentaController::class, 'show'])->name('mis-pedidos.show');
 
     Route::get('/dashboard', fn () => view('dashboard'))->middleware('verified')->name('dashboard');
 
@@ -78,7 +99,7 @@ Route::middleware('auth')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Zona pública — tienda
+| Tienda — pública
 |--------------------------------------------------------------------------
 */
 
