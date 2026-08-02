@@ -6,50 +6,50 @@ Auditoría del 2026-08-01 sobre `routes/`, 8 controladores de dominio, 10 modelo
 
 | ID | Sev | Área | Hallazgo | Fase |
 |---|---|---|---|---|
-| H-01 | 🔴 | Seguridad | Panel de administración completamente público | 1 |
-| H-02 | 🔴 | Datos | Borrar un producto destruye el historial de ventas | 1 |
-| H-03 | 🔴 | Bug | Recepción de órdenes falla: no existe la columna `stock` | 1 |
-| H-04 | 🔴 | Bug | Precio del pivot proveedor-producto: tres nombres distintos | 1 |
-| H-05 | 🔴 | Bug | Contacto del proveedor se descarta en silencio | 1 |
-| H-06 | 🔴 | Datos | Transacción sin rollback en creación de orden de compra | 1 |
-| H-07 | 🔴 | Bug | `proveedores.show` devuelve error 500 | 1 |
-| H-08 | 🟠 | Bug | El contador del carrito siempre muestra 0 | 2 |
-| H-09 | 🟠 | Dominio | Modelos duplicados inglés/español (`Order` vs `OrdenCompra`) | 2 |
-| H-10 | 🟠 | Dominio | Las ventas no registran `user_id` | 2 |
-| H-11 | 🟠 | Dominio | El carrito vive solo en sesión; `user_id` nunca se usa | 2 |
+| H-01 | 🔴 | Seguridad | Panel de administración completamente público | 1 ✅ |
+| H-02 | 🔴 | Datos | Borrar un producto destruye el historial de ventas | 1 ✅ |
+| H-03 | 🔴 | Bug | Recepción de órdenes falla: no existe la columna `stock` | 1 ✅ |
+| H-04 | 🔴 | Bug | Precio del pivot proveedor-producto: tres nombres distintos | 1 ✅ |
+| H-05 | 🔴 | Bug | Contacto del proveedor se descarta en silencio | 1 ✅ |
+| H-06 | 🔴 | Datos | Transacción sin rollback en creación de orden de compra | 1 ✅ |
+| H-07 | 🔴 | Bug | `proveedores.show` devuelve error 500 | 1 ✅ |
+| H-08 | 🟠 | Bug | El contador del carrito siempre muestra 0 | 2 ✅ |
+| H-09 | 🟠 | Dominio | Modelos duplicados inglés/español (`Order` vs `OrdenCompra`) | 2 ✅ |
+| H-10 | 🟠 | Dominio | Las ventas no registran `user_id` | 2 ✅ |
+| H-11 | 🟠 | Dominio | El carrito vive solo en sesión; `user_id` nunca se usa | 2 ✅ |
 | H-12 | 🟠 | Capas | Sin Form Requests: validación duplicada en cada `store`/`update` | 4 |
 | H-13 | 🟠 | Capas | Sin capa de servicios: lógica de negocio en controladores y vistas | 4 |
-| H-14 | 🔴 | Seguridad | Sin roles: **cualquier registrado es administrador** | 3 |
+| H-14 | 🔴 | Seguridad | Sin roles: **cualquier registrado es administrador** | 3 ✅ |
 | H-15 | 🟡 | Vistas | Cuatro sistemas de layout coexistiendo | 5 |
 | H-16 | 🟡 | Vistas | Se usan clases Bootstrap pero Bootstrap nunca se carga | 5 |
 | H-17 | 🟡 | Build | Tailwind por CDN; Vite configurado pero sin usar | 5 |
 | H-18 | 🟡 | Vistas | Marca inconsistente: "PlazaKing" vs "Tattos Market" | 5 |
 | H-19 | 🟡 | Rutas | Rutas duplicadas y sin agrupar en `web.php` | 4 |
 | H-20 | 🟡 | Capas | Route model binding inconsistente | 4 |
-| H-21 | 🟡 | Arquitectura | Google Sheets: tercera fuente de proveedores, se retira | 3 |
+| H-21 | 🟡 | Arquitectura | Google Sheets: tercera fuente de proveedores, se retira | 3 ✅ |
 | H-22 | 🟢 | Rendimiento | Sin paginación en productos ni proveedores | 6 |
 | H-23 | 🟢 | Datos | `DatabaseSeeder` vacío; sin factories de dominio | 6 |
 | H-24 | 🟢 | Calidad | Sin tests de dominio | 6 |
-| H-25 | 🟡 | Esquema | Inconsistencias de tipos, casts, índices y enums | 2 |
-| H-26 | 🟠 | Gestión | Sin control de versiones | 0 |
+| H-25 | 🟡 | Esquema | Inconsistencias de tipos, casts, índices y enums | 2 ✅ |
+| H-26 | 🟠 | Gestión | Sin control de versiones | 0 ✅ |
 | H-27 | 🟢 | Gestión | Carpeta anidada y `package-lock.json` huérfano | 0 |
-| H-28 | 🔴 | Bug | Falta la relación `Producto::proveedores()` que ya se usaba | 1 |
-| H-29 | 🔴 | Bug | `Proveedor` apunta a la tabla `proveedors`, que no existe | 1 |
-| H-30 | 🔴 | Bug | `OrdenCompraItem` escribe timestamps que su tabla no tiene | 1 |
-| H-31 | 🟠 | Bug | Las rutas de perfil de Breeze nunca se registraron | 1 |
-| H-32 | 🔴 | Bug | Un producto retirado rompía órdenes y falseaba el carrito | 1 |
-| H-33 | 🔴 | Datos | `php artisan test` borraba la base de datos de desarrollo | 1 |
+| H-28 | 🔴 | Bug | Falta la relación `Producto::proveedores()` que ya se usaba | 1 ✅ |
+| H-29 | 🔴 | Bug | `Proveedor` apunta a la tabla `proveedors`, que no existe | 1 ✅ |
+| H-30 | 🔴 | Bug | `OrdenCompraItem` escribe timestamps que su tabla no tiene | 1 ✅ |
+| H-31 | 🟠 | Bug | Las rutas de perfil de Breeze nunca se registraron | 1 ✅ |
+| H-32 | 🔴 | Bug | Un producto retirado rompía órdenes y falseaba el carrito | 1 ✅ |
+| H-33 | 🔴 | Datos | `php artisan test` borraba la base de datos de desarrollo | 1 ✅ |
 | H-34 | 🟠 | Gestión | Sin copia de seguridad de la base antes de cada fase | 6 |
-| H-35 | 🔴 | Dominio | Las ventas no descuentan stock | 3 |
-| H-36 | 🔴 | Seguridad | Se podía borrar la línea de carrito de cualquiera | 2 |
-| H-37 | 🟠 | Bug | El cast a enum rompió comparaciones y vistas | 2 |
-| H-38 | 🟡 | Bug | El select de unidad de medida nunca guardaba nada | 2 |
-| H-39 | 🟠 | Esquema | Un usuario puede acabar con dos carritos a la vez | 3 |
-| H-40 | 🟡 | Bug | Asignar dos veces el mismo producto a un proveedor devuelve 500 | 3 |
-| H-41 | 🟢 | Bug | El carrito acepta productos ya retirados del catálogo | 3 |
-| H-42 | 🟠 | Bug | El formulario de producto nunca enviaba el stock | 3 |
-| H-43 | 🟠 | Bug | El botón "Agregar al carrito" de la ficha nunca funcionó | 3 |
-| H-44 | 🔴 | Bug | Editar un proveedor devolvía 500: el binding nunca resolvía | 3 |
+| H-35 | 🔴 | Dominio | Las ventas no descuentan stock | 3 ✅ |
+| H-36 | 🔴 | Seguridad | Se podía borrar la línea de carrito de cualquiera | 2 ✅ |
+| H-37 | 🟠 | Bug | El cast a enum rompió comparaciones y vistas | 2 ✅ |
+| H-38 | 🟡 | Bug | El select de unidad de medida nunca guardaba nada | 2 ✅ |
+| H-39 | 🟠 | Esquema | Un usuario puede acabar con dos carritos a la vez | 3 ✅ |
+| H-40 | 🟡 | Bug | Asignar dos veces el mismo producto a un proveedor devuelve 500 | 3 ✅ |
+| H-41 | 🟢 | Bug | El carrito acepta productos ya retirados del catálogo | 3 ✅ |
+| H-42 | 🟠 | Bug | El formulario de producto nunca enviaba el stock | 3 ✅ |
+| H-43 | 🟠 | Bug | El botón "Agregar al carrito" de la ficha nunca funcionó | 3 ✅ |
+| H-44 | 🔴 | Bug | Editar un proveedor devolvía 500: el binding nunca resolvía | 3 ✅ |
 
 ---
 

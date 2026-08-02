@@ -23,6 +23,10 @@ Reglas para que el proyecto no vuelva al estado descrito en `02-HALLAZGOS.md`. E
 - **Pivots:** singular alfabético → `proveedor_producto`
 - **Claves foráneas:** `<modelo_singular>_id` → `producto_id`, `proveedor_id`
 - **Rutas nombradas:** `recurso.accion` → `productos.index`, `ordenes.recibir`
+- **Todo `Route::resource` con nombre en español declara `parameters()`.** Laravel
+  singulariza en inglés: `proveedores` → `{proveedore}`, que no casa con el
+  argumento `Proveedor $proveedor` del controlador. El binding no falla: entrega
+  un **modelo vacío**, y `update()`/`destroy()` dejan de hacer nada sin avisar (H-44)
 - **Vistas:** `recurso/accion.blade.php` en plural → `productos/index.blade.php`
 
 **Un concepto, un nombre, en toda la pila.** Si el pivot guarda `precio_compra`, entonces la migración, el `withPivot()`, el controlador y el JS de la vista dicen `precio_compra`. Sin excepciones (H-04).
@@ -36,6 +40,7 @@ Reglas para que el proyecto no vuelva al estado descrito en `02-HALLAZGOS.md`. E
 | **Controlador** | Recibir, delegar en el servicio, devolver respuesta | Validar, calcular, consultar la BD directamente |
 | **Servicio** | Reglas de negocio, transacciones | Conocer HTTP (`request()`, `redirect()`) |
 | **Modelo** | Relaciones, scopes, casts, accessors | Reglas de negocio de varios modelos |
+| **Policy** | Responder «¿puede este usuario, sobre este dato?» | Autenticar (de eso va el middleware) |
 | **Vista** | Mostrar datos ya preparados | **Calcular** (ningún total se calcula en Blade) |
 
 **Límite duro:** un método de controlador no supera 15 líneas. Si lo hace, la lógica pertenece a un servicio.
@@ -57,6 +62,19 @@ Reglas para que el proyecto no vuelva al estado descrito en `02-HALLAZGOS.md`. E
   - **Dato accesorio** (línea de carrito) → filtrar con `whereHas()`: debe desaparecer
 
   Omitirlo no siempre revienta; a veces solo calcula mal en silencio (H-32)
+
+## 4 bis. Inventario
+
+- **`productos.stock` solo se modifica desde `InventarioService`.** Ningún
+  controlador, seeder ni comando hace `increment('stock')` por su cuenta: todo
+  movimiento deja su línea en el kardex o no ocurre (H-35)
+- Toda salida se comprueba con la fila del producto **bloqueada** dentro de la
+  transacción. Comprobar el stock y descontarlo en dos pasos sueltos es vender
+  dos veces la última unidad
+- Un ajuste manual **exige motivo**. Un ajuste sin explicación es un descuadre
+  con permiso
+- Los movimientos no se editan ni se borran: un error se corrige con otro
+  movimiento, que deja su propio rastro
 
 ## 5. Front-end
 

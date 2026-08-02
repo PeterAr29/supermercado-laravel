@@ -12,7 +12,7 @@ Cada fase tiene **objetivo**, **alcance cerrado**, **checklist** y **criterio de
 | 0 | Control de versiones y gestión | [#1](https://github.com/PeterAr29/supermercado-laravel/issues/1) ✅ | H-26 |
 | 1 | Seguridad e integridad de datos | [#2](https://github.com/PeterAr29/supermercado-laravel/issues/2) ✅ | H-01…H-07, H-28…H-33 |
 | 2 | Dominio unificado | [#3](https://github.com/PeterAr29/supermercado-laravel/issues/3) ✅ | H-08…H-11, H-25, H-36…H-38 |
-| **3** | **Paneles y roles** 🆕 | [#11](https://github.com/PeterAr29/supermercado-laravel/issues/11) | H-14, H-21, H-35 |
+| 3 | Paneles y roles | [#11](https://github.com/PeterAr29/supermercado-laravel/issues/11) ✅ | H-14, H-21, H-35, H-39…H-44 |
 | 4 | Separación de capas (MVC real) | [#4](https://github.com/PeterAr29/supermercado-laravel/issues/4) | H-12, H-13, H-19, H-20 |
 | 5 | Capa de presentación | [#5](https://github.com/PeterAr29/supermercado-laravel/issues/5) | H-15…H-18 |
 | 6 | Robustez y calidad | [#6](https://github.com/PeterAr29/supermercado-laravel/issues/6) | H-22, H-23, H-24, H-34 |
@@ -189,7 +189,7 @@ las Policies.
 
 ---
 
-## Fase 3 — Paneles y roles ⬜ 🆕
+## Fase 3 — Paneles y roles ✅
 
 **Objetivo:** que el supermercado tenga **dos caras**: la tienda para el cliente y el panel de gestión para el administrador. Y que el inventario refleje de verdad lo que entra y lo que sale.
 
@@ -229,7 +229,7 @@ las Policies.
 - [ ] Quitar el bloque de proveedores de `productos/show`, o servirlo desde la BD
 - [ ] La BD queda como **única fuente** de proveedores
 
-### Criterio de aceptación
+### Criterio de aceptación — ✅ cumplido
 1. Un usuario recién registrado **no** puede entrar en `/admin` ni ver enlaces de gestión.
 2. El administrador entra en `/admin` y gestiona productos, proveedores y órdenes.
 3. El cliente ve **sus** pedidos en `/mis-pedidos`, y solo los suyos.
@@ -237,6 +237,32 @@ las Policies.
 5. Recibir una orden **suma stock** y deja un movimiento de tipo `entrada`.
 6. El kardex de un producto cuadra: `stock actual = entradas − salidas ± ajustes`.
 7. No queda ninguna referencia a `docs.google.com` en el código.
+
+**Verificado el 2026-08-02 contra MySQL real: 124 comprobaciones, 0 fallos.**
+- Roles y policies: **27 comprobaciones** (enum, `$fillable`, 403 del cliente en cada zona)
+- Inventario: **37 comprobaciones** (entrada, salida, ajuste, kardex cuadrado, venta sin stock que no se escribe a medias)
+- Paneles: **60 comprobaciones** (13 pantallas de `/admin` en 200, panel de cliente, H-39, H-40, H-42)
+
+Los datos de prueba se crearon dentro de transacciones revertidas.
+`php artisan test`: **25 pasan, 0 fallan**.
+
+### Hallazgos nuevos descubiertos durante la fase
+
+| ID | Qué era | Impacto real |
+|---|---|---|
+| H-42 | El formulario de producto nunca enviaba `stock` | **Todo producto creado desde la app nacía con 0 unidades** |
+| H-43 | El botón "Agregar al carrito" de la ficha no enviaba `producto_id` | Ese botón **nunca funcionó**; el del listado sí, y por eso pasó desapercibido |
+| H-44 | `Route::resource` generaba `{proveedore}` | **Editar un proveedor devolvía 500**, y `update()`/`destroy()` no hacían nada en silencio |
+
+**Lectura de fondo:** H-44 es la tercera factura del mismo error — dejar que
+Laravel singularice o pluralice en español (H-29 con la tabla, H-30 con los
+timestamps, H-44 con el parámetro de ruta). Y los tres se descubrieron *al usar*
+la pantalla, no al leer el código.
+
+**Sobre el alcance:** `InventarioService` pertenecía a la Fase 4 (H-13). Se
+adelanta porque H-35 lo necesita en dos flujos —venta y recepción— y escribir
+el descuento de stock dos veces para unificarlo después habría sido trabajo
+tirado. La Fase 4 construirá `CheckoutService` y `OrdenCompraService` encima.
 
 ---
 
