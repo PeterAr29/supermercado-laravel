@@ -17,6 +17,9 @@ Reglas para que el proyecto no vuelva al estado descrito en `02-HALLAZGOS.md`. E
 
 - **Modelos:** singular, `PascalCase` → `Producto`, `OrdenCompra`
 - **Tablas:** plural, `snake_case` → `productos`, `ordenes_compra`
+- **Todo modelo del dominio declara `$table` explícitamente.** Eloquent pluraliza en
+  inglés: `Proveedor` → `proveedors`, no `proveedores`. Dejarlo al automatismo costó
+  que el CRUD de proveedores nunca funcionara (H-29)
 - **Pivots:** singular alfabético → `proveedor_producto`
 - **Claves foráneas:** `<modelo_singular>_id` → `producto_id`, `proveedor_id`
 - **Rutas nombradas:** `recurso.accion` → `productos.index`, `ordenes.recibir`

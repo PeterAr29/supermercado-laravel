@@ -1,13 +1,14 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\CarritoController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\OrdenCompraController;
+use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\ProveedorProductoController;
-use App\Http\Controllers\OrdenCompraController;
 use App\Http\Controllers\ProveedorSheetController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -53,6 +54,12 @@ Route::middleware('auth')->group(function () {
 
     // Panel Breeze
     Route::get('/dashboard', fn () => view('dashboard'))->middleware('verified')->name('dashboard');
+
+    // Perfil — el controlador y las vistas existían, pero las rutas nunca
+    // llegaron a registrarse: /profile devolvía 404 (H-31).
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 /*

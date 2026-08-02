@@ -6,6 +6,30 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [No publicado]
 
+### Fase 1 — Seguridad e integridad de datos — 2026-08-01
+
+**Seguridad**
+- Las rutas de escritura exigen sesión iniciada. Antes, un visitante anónimo podía borrar el catálogo, crear proveedores y reponer stock (`H-01`)
+
+**Corregido**
+- Borrar un producto ya no destruye el historial de ventas: `order_items` pasa de `CASCADE` a `RESTRICT` y `Producto` usa `SoftDeletes` (`H-02`)
+- La recepción de órdenes ya no falla: se crea la columna `stock` que el código escribía (`H-03`)
+- El precio de compra del proveedor se unifica como `precio_compra` en migración, modelos, controlador y vista (`H-04`)
+- Los datos de contacto del proveedor dejan de perderse en silencio: `contacto` se divide en `contacto_nombre` y `contacto_telefono` (`H-05`)
+- La creación de órdenes usa `DB::transaction()` con rollback automático; `recibir()` también (`H-06`)
+- `proveedores.show` ya no devuelve 500: se excluye del resource (`H-07`)
+- Añadida la relación `Producto::proveedores()`, que el controlador ya invocaba (`H-28`)
+- `Proveedor` declara su tabla: apuntaba a `proveedors`, inexistente (`H-29`)
+- `OrdenCompraItem` deja de escribir timestamps que su tabla no tiene (`H-30`)
+- Registradas las rutas de perfil de Breeze: `/profile` devolvía 404 (`H-31`)
+
+**Notas**
+- H-29 y H-30 revelan que el módulo de proveedores y órdenes de compra nunca llegó a ejecutarse
+- La columna `stock` existía en la base de desarrollo sin migración que la creara; la migración de H-03 reconcilia ambos casos
+- Verificado contra MySQL real: 22 comprobaciones, 0 fallos. `php artisan test`: 25 pasan (antes 5 rojos)
+
+---
+
 ### Fase 0 — Control de versiones y gestión — 2026-08-01
 
 **Añadido**
@@ -25,7 +49,6 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 | Fase | Nombre | Estado |
 |---|---|---|
-| 1 | Seguridad e integridad de datos | ⬜ Pendiente |
 | 2 | Dominio unificado | ⬜ Pendiente |
 | 3 | Separación de capas (MVC real) | ⬜ Pendiente |
 | 4 | Capa de presentación | ⬜ Pendiente |
