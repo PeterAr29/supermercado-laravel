@@ -32,7 +32,7 @@ Auditoría del 2026-08-01 sobre `routes/`, 8 controladores de dominio, 10 modelo
 | H-24 | 🟢 | Calidad | Sin tests de dominio | 6 ✅ |
 | H-25 | 🟡 | Esquema | Inconsistencias de tipos, casts, índices y enums | 2 ✅ |
 | H-26 | 🟠 | Gestión | Sin control de versiones | 0 ✅ |
-| H-27 | 🟢 | Gestión | Carpeta anidada y `package-lock.json` huérfano | 0 |
+| H-27 | 🟢 | Gestión | Carpeta anidada y `package-lock.json` huérfano | 0 ✅ |
 | H-28 | 🔴 | Bug | Falta la relación `Producto::proveedores()` que ya se usaba | 1 ✅ |
 | H-29 | 🔴 | Bug | `Proveedor` apunta a la tabla `proveedors`, que no existe | 1 ✅ |
 | H-30 | 🔴 | Bug | `OrdenCompraItem` escribe timestamps que su tabla no tiene | 1 ✅ |
@@ -638,6 +638,19 @@ Solo están los de Breeze (auth y perfil). Cero cobertura de carrito, checkout, 
 | `Feature/Admin/AccesoPanelTest` | invitado sin acceso de escritura (H-01), cliente fuera de `/admin` (H-14), registro que nunca crea administradores |
 
 ### H-27 — Restos de andamiaje
-- Carpeta anidada: la app real está en `supermercado_laravel/supermercado_laravel/`
+**Resuelto el 2026-08-02**, por decisión del responsable. *(Estaba en la Fase 0 a la espera de esa decisión.)*
+
+- Carpeta anidada: la app real estaba en `supermercado_laravel/supermercado_laravel/`
 - `package-lock.json` huérfano en la raíz externa, con `"packages": {}` vacío
 - `storage/logs/laravel.log` versionado con trazas antiguas (ya cubierto por `.gitignore`)
+
+**Arreglo:** el contenido de la carpeta interna sube un nivel y la raíz del proyecto pasa a ser la raíz del repositorio. El `package-lock.json` huérfano se borra: chocaba de nombre con el real, que sí tiene dependencias.
+
+**Por qué no fue solo un `mv`:**
+
+- **Un `php.exe` en marcha** — el *language server* de PHP IntelliSense de VS Code— indexa el proyecto y mantiene ficheros abiertos. En Windows eso puede bloquear el renombrado de un directorio. Se comprobó antes de mover nada, renombrando `vendor`, `node_modules`, `app` y `.git` de ida y vuelta: si alguno hubiera fallado, el proyecto se habría quedado a medio mover
+- **Se movió entrada por entrada, no la carpeta entera.** Son renombrados dentro del mismo volumen: instantáneos y, si uno falla, deja esa entrada intacta en su sitio en vez de a medio copiar
+- **Las vistas compiladas guardan la ruta absoluta** de su `.blade.php` en `storage/framework/views`. Sin `php artisan optimize:clear` quedan 60 ficheros apuntando a una carpeta que ya no existe
+- **Git no se entera y no tiene por qué:** `.git` viaja con el resto y el historial queda intacto. Lo que cambia es dónde está el repositorio, no el repositorio
+
+**Verificado tras el traslado:** `git log` y `git status` intactos con `main` sincronizado · `php artisan test` 49 pasan · `npm run build` reconstruye los assets · y las pantallas se sirven de verdad —`/`, `/productos` y `/carrito` devuelven HTML con productos reales y el enlace a la página 2—, no solo un `200`.

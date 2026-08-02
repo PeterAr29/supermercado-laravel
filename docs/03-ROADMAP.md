@@ -16,7 +16,7 @@ Cada fase tiene **objetivo**, **alcance cerrado**, **checklist** y **criterio de
 | 4 | Separación de capas (MVC real) | [#4](https://github.com/PeterAr29/supermercado-laravel/issues/4) ✅ | H-12, H-13, H-19, H-20, H-45, H-46 |
 | 5 | Capa de presentación | [#5](https://github.com/PeterAr29/supermercado-laravel/issues/5) ✅ | H-15…H-18, H-43, H-47 |
 | 6 | Robustez y calidad | [#6](https://github.com/PeterAr29/supermercado-laravel/issues/6) ✅ | H-22, H-23, H-24, H-34 |
-| — | Decisión sobre carpeta anidada | [#7](https://github.com/PeterAr29/supermercado-laravel/issues/7) | H-27 |
+| — | Decisión sobre carpeta anidada | [#7](https://github.com/PeterAr29/supermercado-laravel/issues/7) ✅ | H-27 |
 
 ### Cambio de plan — 2026-08-01
 
@@ -43,7 +43,7 @@ H-14 (roles) se adelanta de la antigua Fase 3 a la nueva, por urgencia: hoy cual
 - [x] `git init` + commit inicial con el estado actual íntegro (191 archivos, rama `main`)
 - [x] Verificar que `.gitignore` excluye `.env`, `/vendor`, `/node_modules`, `/storage/logs`
 - [x] `CHANGELOG.md` en la raíz
-- [ ] Decidir qué hacer con la carpeta anidada y el `package-lock.json` huérfano (H-27) — *requiere decisión del responsable*
+- [x] Decidir qué hacer con la carpeta anidada y el `package-lock.json` huérfano (H-27) — *decidido el 2026-08-02: se aplana*. La raíz del proyecto es ya la raíz del repositorio
 
 ### Criterio de aceptación — ✅ cumplido
 `git log` muestra el commit inicial, `git status` sale limpio y `git check-ignore .env` confirma que el `.env` no está versionado.

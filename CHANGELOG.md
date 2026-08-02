@@ -6,6 +6,23 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [No publicado]
 
+### Estructura — Se aplana la carpeta anidada — 2026-08-02
+
+**Cambiado**
+- **La raíz del proyecto es ya la raíz del repositorio** (`H-27`). La app vivía en `supermercado_laravel/supermercado_laravel/`, un nivel por debajo de donde estaba el repositorio
+
+**Eliminado**
+- El `package-lock.json` huérfano de la raíz externa, con `"packages": {}` vacío. Chocaba de nombre con el real, que sí tiene dependencias
+
+**Notas**
+- ⚠️ **Toda ruta absoluta al proyecto pierde un nivel.** Accesos directos, configuración del IDE y cualquier tarea programada que apuntara a la carpeta interna hay que reapuntarlos
+- Se comprobó **antes de mover nada** que los directorios se podían renombrar: el *language server* de PHP de VS Code mantiene ficheros abiertos y en Windows eso bloquea renombrados. Se movió entrada por entrada, no la carpeta entera, para que un fallo dejara cada cosa intacta en su sitio
+- `php artisan optimize:clear` es obligatorio tras el traslado: las vistas compiladas guardan la ruta absoluta de su `.blade.php`
+- Git no se ve afectado —`.git` viaja con el resto y el historial queda intacto—; lo que cambia es dónde está el repositorio
+- Verificado: `php artisan test` **49 pasan** · `npm run build` reconstruye los assets · `/`, `/productos` y `/carrito` sirven HTML con productos reales y el enlace a la página 2
+
+---
+
 ### Fase 6 — Robustez y calidad — 2026-08-02
 
 **Añadido**
@@ -188,8 +205,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## Fases pendientes
 
-Ninguna. Las fases 0 a 6 del [roadmap](docs/03-ROADMAP.md) están cerradas.
+Ninguna. Las fases 0 a 6 del [roadmap](docs/03-ROADMAP.md) están cerradas, y con
+H-27 resuelto **no queda ningún hallazgo abierto** de los 47 auditados.
 
-Queda abierto **H-27** —la carpeta anidada y el `package-lock.json` huérfano de la
-raíz externa—, que no es una fase sino una decisión pendiente del responsable. Lo
-demás sale del backlog, al final del roadmap.
+Lo que venga ahora sale del backlog, al final del roadmap.
