@@ -2,16 +2,20 @@
 
 Cada fase tiene **objetivo**, **alcance cerrado**, **checklist** y **criterio de aceptación**. No se pasa a la siguiente hasta cumplir el criterio.
 
-| Fase | Nombre | Estado | Hallazgos que cierra |
-|---|---|---|---|
-| 0 | Control de versiones y gestión | ✅ Completada | H-26 (H-27 parcial) |
-| 1 | Seguridad e integridad de datos | ⬜ Pendiente | H-01…H-07 |
-| 2 | Dominio unificado | ⬜ Pendiente | H-08…H-11, H-25 |
-| 3 | Separación de capas (MVC real) | ⬜ Pendiente | H-12, H-13, H-14, H-19, H-20 |
-| 4 | Capa de presentación | ⬜ Pendiente | H-15…H-18 |
-| 5 | Robustez y calidad | ⬜ Pendiente | H-21…H-24 |
+> ⚠️ **El estado vivo de cada tarea está en el tablero, no aquí.**
+> Tablero: https://github.com/users/PeterAr29/projects/1
+> Este documento define **el porqué y el criterio de aceptación**; el tablero marca **qué está hecho**.
+> Las casillas de más abajo son la referencia del alcance — se marcan en la issue, no en este archivo.
 
-Leyenda: ⬜ Pendiente · 🟡 En curso · ✅ Completada
+| Fase | Nombre | Issue | Hallazgos que cierra |
+|---|---|---|---|
+| 0 | Control de versiones y gestión | [#1](https://github.com/PeterAr29/supermercado-laravel/issues/1) ✅ | H-26 |
+| 1 | Seguridad e integridad de datos | [#2](https://github.com/PeterAr29/supermercado-laravel/issues/2) | H-01…H-07 |
+| 2 | Dominio unificado | [#3](https://github.com/PeterAr29/supermercado-laravel/issues/3) | H-08…H-11, H-25 |
+| 3 | Separación de capas (MVC real) | [#4](https://github.com/PeterAr29/supermercado-laravel/issues/4) | H-12, H-13, H-14, H-19, H-20 |
+| 4 | Capa de presentación | [#5](https://github.com/PeterAr29/supermercado-laravel/issues/5) | H-15…H-18 |
+| 5 | Robustez y calidad | [#6](https://github.com/PeterAr29/supermercado-laravel/issues/6) | H-21…H-24 |
+| — | Decisión sobre carpeta anidada | [#7](https://github.com/PeterAr29/supermercado-laravel/issues/7) | H-27 |
 
 ---
 
