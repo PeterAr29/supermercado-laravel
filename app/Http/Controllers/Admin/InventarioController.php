@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\AjustarInventarioRequest;
 use App\Models\Producto;
 use App\Services\InventarioService;
 use Illuminate\Http\Request;
@@ -42,27 +43,18 @@ class InventarioController extends Controller
 
         return view('admin.inventario.kardex', [
             'producto' => $producto,
-            'movimientos' => $producto->movimientos()
-                ->with(['user', 'origen'])
-                ->paginate(30),
-            // Se muestra al lado del stock declarado: si no coinciden, algo
-            // ha movido existencias sin pasar por el servicio.
+            'movimientos' => $producto->movimientos()->with(['user', 'origen'])->paginate(30),
+            // Se muestra al lado del stock declarado: si no coinciden, algo ha
+            // movido existencias sin pasar por el servicio.
             'stockSegunKardex' => $this->inventario->stockSegunKardex($producto),
         ]);
     }
 
     /** Ajuste manual: se cuenta la estantería y se corrige. */
-    public function ajustar(Request $request, Producto $producto)
+    public function ajustar(AjustarInventarioRequest $request, Producto $producto)
     {
-        $this->authorize('update', $producto);
-
-        $datos = $request->validate([
-            'stock_real' => 'required|integer|min:0',
-            'motivo' => 'required|string|min:5|max:255',
-        ]);
-
         try {
-            $this->inventario->ajustar($producto, $datos['stock_real'], $datos['motivo']);
+            $this->inventario->ajustar($producto, $request->stock_real, $request->motivo);
         } catch (InvalidArgumentException $e) {
             // El caso típico: teclear el stock que ya estaba registrado.
             throw ValidationException::withMessages(['stock_real' => $e->getMessage()]);

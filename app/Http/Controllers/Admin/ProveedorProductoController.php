@@ -3,75 +3,68 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ActualizarPrecioCompraRequest;
+use App\Http\Requests\Admin\AsignarProductoRequest;
 use App\Models\Producto;
 use App\Models\Proveedor;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
+/**
+ * Qué productos vende cada proveedor, y a qué precio nos los vende.
+ *
+ * Los métodos recibían `$producto_id` suelto y hacían el `find` a mano; ahora
+ * el modelo llega resuelto por route model binding (H-20).
+ */
 class ProveedorProductoController extends Controller
 {
-    // Lista de productos que vende ese proveedor
     public function index(Proveedor $proveedor)
     {
-        $productos = $proveedor->productos()->paginate(10);
+        $this->authorize('view', $proveedor);
+
+        $productos = $proveedor->productos()->orderBy('nombre')->paginate(10);
 
         return view('admin.proveedores.productos.index', compact('proveedor', 'productos'));
     }
 
-    // Formulario para asignar un producto
     public function create(Proveedor $proveedor)
     {
-        // Mostrar solo productos NO asignados
-        $productos = Producto::whereDoesntHave('proveedores', function ($q) use ($proveedor) {
-            $q->where('proveedor_id', $proveedor->id);
-        })->get();
+        $this->authorize('update', $proveedor);
+
+        // Solo los que aún no vende, para que el formulario no ofrezca algo
+        // que la validación va a rechazar después (H-40).
+        $productos = Producto::whereDoesntHave('proveedores', fn ($q) => $q->where('proveedor_id', $proveedor->id))
+            ->orderBy('nombre')
+            ->get();
 
         return view('admin.proveedores.productos.create', compact('proveedor', 'productos'));
     }
 
-    // Guardar la relación en la tabla pivot
-    public function store(Request $request, Proveedor $proveedor)
+    public function store(AsignarProductoRequest $request, Proveedor $proveedor)
     {
-        $request->validate([
-            'producto_id' => [
-                'required',
-                Rule::exists('productos', 'id')->whereNull('deleted_at'),
-                // El índice único que añadió H-25 convirtió el attach()
-                // repetido en un error 500 de la base. Que la base lo rechace
-                // es lo correcto; lo que faltaba era que el controlador lo
-                // previera y respondiera con un mensaje (H-40).
-                Rule::unique('proveedor_producto', 'producto_id')
-                    ->where('proveedor_id', $proveedor->id),
-            ],
-            'precio_compra' => 'required|numeric|min:0',
-        ], [
-            'producto_id.unique' => 'Ese producto ya está asignado a este proveedor.',
-        ]);
-
         $proveedor->productos()->attach($request->producto_id, [
             'precio_compra' => $request->precio_compra,
         ]);
 
-        return redirect()
-            ->route('admin.proveedor.productos.index', $proveedor)
+        return redirect()->route('admin.proveedor.productos.index', $proveedor)
             ->with('success', 'Producto asignado correctamente');
     }
 
-    // Editar precio de compra
-    public function edit(Proveedor $proveedor, $producto_id)
+    public function edit(Proveedor $proveedor, Producto $producto)
     {
-        $producto = $proveedor->productos()->where('producto_id', $producto_id)->first();
+        $this->authorize('update', $proveedor);
 
-        return view('admin.proveedores.productos.edit', compact('proveedor', 'producto'));
+        // La línea del pivot, no el producto suelto: la vista necesita el
+        // precio de compra, que vive en la relación.
+        $asignado = $proveedor->productos()->findOrFail($producto->id);
+
+        return view('admin.proveedores.productos.edit', [
+            'proveedor' => $proveedor,
+            'producto' => $asignado,
+        ]);
     }
 
-    public function update(Request $request, Proveedor $proveedor, $producto_id)
+    public function update(ActualizarPrecioCompraRequest $request, Proveedor $proveedor, Producto $producto)
     {
-        $request->validate([
-            'precio_compra' => 'required|numeric',
-        ]);
-
-        $proveedor->productos()->updateExistingPivot($producto_id, [
+        $proveedor->productos()->updateExistingPivot($producto->id, [
             'precio_compra' => $request->precio_compra,
         ]);
 
@@ -79,13 +72,13 @@ class ProveedorProductoController extends Controller
             ->with('success', 'Precio actualizado');
     }
 
-    // Quitar producto del proveedor
-    public function destroy(Proveedor $proveedor, $producto_id)
+    public function destroy(Proveedor $proveedor, Producto $producto)
     {
-        $proveedor->productos()->detach($producto_id);
+        $this->authorize('update', $proveedor);
 
-        return redirect()
-            ->route('admin.proveedor.productos.index', $proveedor)
+        $proveedor->productos()->detach($producto->id);
+
+        return redirect()->route('admin.proveedor.productos.index', $proveedor)
             ->with('success', 'Producto retirado del proveedor');
     }
 }
