@@ -17,19 +17,19 @@ Auditoría del 2026-08-01 sobre `routes/`, 8 controladores de dominio, 10 modelo
 | H-09 | 🟠 | Dominio | Modelos duplicados inglés/español (`Order` vs `OrdenCompra`) | 2 |
 | H-10 | 🟠 | Dominio | Las ventas no registran `user_id` | 2 |
 | H-11 | 🟠 | Dominio | El carrito vive solo en sesión; `user_id` nunca se usa | 2 |
-| H-12 | 🟠 | Capas | Sin Form Requests: validación duplicada en cada `store`/`update` | 3 |
-| H-13 | 🟠 | Capas | Sin capa de servicios: lógica de negocio en controladores y vistas | 3 |
-| H-14 | 🟠 | Seguridad | Sin Policies ni sistema de roles | 3 |
-| H-15 | 🟡 | Vistas | Cuatro sistemas de layout coexistiendo | 4 |
-| H-16 | 🟡 | Vistas | Se usan clases Bootstrap pero Bootstrap nunca se carga | 4 |
-| H-17 | 🟡 | Build | Tailwind por CDN; Vite configurado pero sin usar | 4 |
-| H-18 | 🟡 | Vistas | Marca inconsistente: "PlazaKing" vs "Tattos Market" | 4 |
-| H-19 | 🟡 | Rutas | Rutas duplicadas y sin agrupar en `web.php` | 3 |
-| H-20 | 🟡 | Capas | Route model binding inconsistente | 3 |
-| H-21 | 🟢 | Rendimiento | Google Sheets: petición HTTP en cada ficha de producto | 5 |
-| H-22 | 🟢 | Rendimiento | Sin paginación en productos ni proveedores | 5 |
-| H-23 | 🟢 | Datos | `DatabaseSeeder` vacío; sin factories de dominio | 5 |
-| H-24 | 🟢 | Calidad | Sin tests de dominio | 5 |
+| H-12 | 🟠 | Capas | Sin Form Requests: validación duplicada en cada `store`/`update` | 4 |
+| H-13 | 🟠 | Capas | Sin capa de servicios: lógica de negocio en controladores y vistas | 4 |
+| H-14 | 🔴 | Seguridad | Sin roles: **cualquier registrado es administrador** | 3 |
+| H-15 | 🟡 | Vistas | Cuatro sistemas de layout coexistiendo | 5 |
+| H-16 | 🟡 | Vistas | Se usan clases Bootstrap pero Bootstrap nunca se carga | 5 |
+| H-17 | 🟡 | Build | Tailwind por CDN; Vite configurado pero sin usar | 5 |
+| H-18 | 🟡 | Vistas | Marca inconsistente: "PlazaKing" vs "Tattos Market" | 5 |
+| H-19 | 🟡 | Rutas | Rutas duplicadas y sin agrupar en `web.php` | 4 |
+| H-20 | 🟡 | Capas | Route model binding inconsistente | 4 |
+| H-21 | 🟡 | Arquitectura | Google Sheets: tercera fuente de proveedores, se retira | 3 |
+| H-22 | 🟢 | Rendimiento | Sin paginación en productos ni proveedores | 6 |
+| H-23 | 🟢 | Datos | `DatabaseSeeder` vacío; sin factories de dominio | 6 |
+| H-24 | 🟢 | Calidad | Sin tests de dominio | 6 |
 | H-25 | 🟡 | Esquema | Inconsistencias de tipos, casts, índices y enums | 2 |
 | H-26 | 🟠 | Gestión | Sin control de versiones | 0 |
 | H-27 | 🟢 | Gestión | Carpeta anidada y `package-lock.json` huérfano | 0 |
@@ -39,7 +39,8 @@ Auditoría del 2026-08-01 sobre `routes/`, 8 controladores de dominio, 10 modelo
 | H-31 | 🟠 | Bug | Las rutas de perfil de Breeze nunca se registraron | 1 |
 | H-32 | 🔴 | Bug | Un producto retirado rompía órdenes y falseaba el carrito | 1 |
 | H-33 | 🔴 | Datos | `php artisan test` borraba la base de datos de desarrollo | 1 |
-| H-34 | 🟠 | Gestión | Sin copia de seguridad de la base antes de cada fase | 5 |
+| H-34 | 🟠 | Gestión | Sin copia de seguridad de la base antes de cada fase | 6 |
+| H-35 | 🔴 | Dominio | Las ventas no descuentan stock | 3 |
 
 ---
 
@@ -98,8 +99,26 @@ Es el peor tipo de bug: valida, guarda, redirige con "creado correctamente" y pi
 
 **Arreglo:** `DB::transaction(function () { ... })` con closure.
 
+### H-35 — Las ventas no descuentan stock
+**Descubierto al replantear el roadmap (2026-08-01).** *(Asignado a la Fase 3.)*
+
+**Dónde:** `app/Http/Controllers/CarritoController.php::procesarPago`
+
+El método registra la venta, crea sus líneas y vacía el carrito, pero **no toca `producto.stock` en ningún momento**. `grep -n "stock" CarritoController.php` no devuelve nada.
+
+El inventario solo cuenta media historia:
+
+| Movimiento | Estado |
+|---|---|
+| **Entrada** — recepción de orden de compra | ✅ suma stock (arreglado en la Fase 1, H-03) |
+| **Salida** — venta al cliente | ❌ **no descuenta nada** |
+
+Se pueden vender 50 unidades y el stock sigue intacto. Tampoco se comprueba que haya existencias antes de confirmar la venta: se puede comprar lo que no hay.
+
+**Arreglo (Fase 3):** la venta descuenta stock dentro de la misma transacción, valida disponibilidad antes de confirmar, y registra el movimiento en `movimientos_inventario`.
+
 ### H-34 — Sin copia de seguridad de la base antes de cada fase
-**Abierto.** *(Asignado a la Fase 5.)*
+**Abierto.** *(Asignado a la Fase 6.)*
 
 Git protege el **código**, pero los **datos** de desarrollo no están versionados ni respaldados. H-33 lo dejó claro del peor modo posible: los productos se perdieron sin posibilidad de recuperación.
 
@@ -266,8 +285,16 @@ El total del carrito se calcula **tres veces**, en tres lenguajes distintos:
 
 Si cambia la regla (IVA, descuento, `unidad_medida` por kg) hay que acordarse de los tres.
 
-### H-14 — Sin Policies ni roles
-No existe distinción entre cliente y administrador. `User` no tiene campo de rol. Prerrequisito de H-01 para hacer la autorización granular.
+### H-14 — Sin roles: cualquier registrado es administrador
+**Severidad elevada a 🔴 y adelantado a la Fase 3 el 2026-08-01.**
+
+No existe distinción entre cliente y administrador: `User` no tiene campo de rol.
+
+Antes de la Fase 1 esto quedaba tapado por un problema mayor (todo era público). Ahora que el acceso exige sesión, la consecuencia es concreta y comprobable: **cualquiera que se registre en `/register` obtiene acceso completo al panel de gestión** — crear y borrar productos, gestionar proveedores, recibir órdenes de compra.
+
+Un cliente del supermercado no debería poder tocar nada de eso.
+
+**Arreglo (Fase 3):** campo `rol` en `users`, middleware `admin`, Policies por recurso, y registro público que siempre crea clientes.
 
 ---
 
@@ -312,7 +339,22 @@ No existe distinción entre cliente y administrador. `User` no tiene campo de ro
 
 ## 🟢 Bajos
 
-### H-21 — Google Sheets sin caché
+### H-21 — Google Sheets: tercera fuente de proveedores
+**Replanteado el 2026-08-01: se retira en lugar de arreglarse.** *(Movido de la Fase 6 a la Fase 3.)*
+
+Había **tres** fuentes de datos de proveedores compitiendo entre sí:
+
+| Fuente | Integrada con órdenes y stock |
+|---|---|
+| Tabla `proveedores` + CRUD | ✅ sí — la única |
+| Google Sheets A (`ProveedorSheetService`) | ❌ no |
+| Google Sheets B (`ProveedorSheetController`, **otra URL**) | ❌ no |
+
+Un proveedor que vive en una hoja de cálculo no tiene id en la base, así que **no puede recibir una orden de compra** ni relacionarse con productos o stock. La BD ya hace todo lo que hacen las hojas, y además funciona.
+
+**Decisión:** eliminar ambas integraciones. Los proveedores se gestionan desde el panel de administración, con la BD como única fuente.
+
+Problemas técnicos que esto elimina de paso:
 **Dónde:** `app/Services/ProveedorSheetService.php` · `app/Http/Controllers/ProveedorSheetController.php`
 - `ProductoController::show:118` hace una **petición HTTP a Google en cada carga de ficha de producto**
 - Sin `Cache::remember()`, sin `timeout()` → si Google tarda, la tienda tarda
