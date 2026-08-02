@@ -12,7 +12,8 @@ class Proveedor extends Model
         'telefono',
         'email',
         'direccion',
-        'contacto',
+        'contacto_nombre',
+        'contacto_telefono',
         'categoria',
         'activo'
     ];
@@ -20,7 +21,7 @@ class Proveedor extends Model
     public function productos()
     {
         return $this->belongsToMany(Producto::class, 'proveedor_producto')
-                    ->withPivot('stock_proveedor');
+                    ->withPivot('stock_proveedor', 'precio_compra');
     }
 
     public function ordenes()
