@@ -17,3 +17,6 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+
+# Volcados de la base de desarrollo (H-34)
+backup_*.sql

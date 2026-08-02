@@ -2,21 +2,23 @@
 
 namespace Database\Seeders;
 
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Reconstruye una base de trabajo completa.
+     *
+     * El orden importa: los productos necesitan categorías, y el catálogo de
+     * cada proveedor necesita productos.
      */
     public function run(): void
     {
-        // \App\Models\User::factory(10)->create();
-
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        $this->call([
+            UserSeeder::class,
+            CategoriaSeeder::class,
+            ProductoSeeder::class,
+            ProveedorSeeder::class,
+        ]);
     }
 }
