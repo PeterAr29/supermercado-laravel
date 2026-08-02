@@ -2,11 +2,12 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\Auth;
-use App\Models\CarritoItem;
+use App\Models\Carrito;
 use App\Models\Categoria;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,12 +27,15 @@ class AppServiceProvider extends ServiceProvider
         View::composer('*', function ($view) {
 
             // 🔹 CONTADOR DEL CARRITO
-            $carritoCount = 0;
+            //
+            // Antes solo miraba Auth::user()->carrito, una relación que no
+            // existía: devolvía null y el contador se quedaba siempre en 0,
+            // ni para invitados ni para usuarios (H-08).
+            $carrito = Auth::check()
+                ? Auth::user()->carrito
+                : Carrito::whereNull('user_id')->find(Session::get('carrito_id'));
 
-            if (Auth::check() && Auth::user()->carrito) {
-                $carritoCount = CarritoItem::where('carrito_id', Auth::user()->carrito->id)
-                                           ->sum('cantidad');
-            }
+            $carritoCount = $carrito ? $carrito->totalUnidades() : 0;
 
             // 🔹 CATEGORÍAS PARA EL MENÚ LATERAL
             $categorias = Categoria::orderBy('nombre')->get();
@@ -39,7 +43,7 @@ class AppServiceProvider extends ServiceProvider
             // 🔹 COMPARTIR VARIABLES CON TODAS LAS VISTAS
             $view->with([
                 'carritoCount' => $carritoCount,
-                'categorias'   => $categorias
+                'categorias' => $categorias,
             ]);
         });
     }

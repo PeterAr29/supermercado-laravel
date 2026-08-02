@@ -10,8 +10,6 @@ use Illuminate\Database\Seeder;
  * Catálogo de trabajo para desarrollo.
  *
  * Cada producto es [nombre, precio venta, stock, unidad, descripción].
- * 'unidad_medida' se asigna fuera de $fillable a propósito: la columna existe
- * pero el modelo aún no la expone a asignación masiva (H-25, Fase 2).
  */
 class ProductoSeeder extends Seeder
 {
@@ -90,17 +88,15 @@ class ProductoSeeder extends Seeder
                     continue;
                 }
 
-                $producto = new Producto([
+                Producto::create([
                     'nombre' => $nombre,
                     'precio' => $precio,
                     'stock' => $stock,
+                    'unidad_medida' => $unidad,
                     'descripcion' => $descripcion,
                     'categoria_id' => $categoria->id,
                     'imagen' => 'https://placehold.co/400x400/e2e8f0/475569?text='.urlencode($nombre),
                 ]);
-
-                $producto->unidad_medida = $unidad;
-                $producto->save();
             }
         }
 

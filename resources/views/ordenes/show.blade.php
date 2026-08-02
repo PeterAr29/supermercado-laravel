@@ -6,7 +6,7 @@
     <h2 class="mb-4">Orden #{{ $orden->id }}</h2>
 
     <p><strong>Proveedor:</strong> {{ $orden->proveedor->nombre }}</p>
-    <p><strong>Estado:</strong> {{ $orden->estado }}</p>
+    <p><strong>Estado:</strong> {{ $orden->estado->etiqueta() }}</p>
 
     <hr>
 
@@ -36,7 +36,7 @@
 
     <h3>Total: S/ {{ number_format($orden->total, 2) }}</h3>
 
-    @if($orden->estado == 'pendiente')
+    @if($orden->estaPendiente())
         <form action="{{ route('ordenes.recibir', $orden) }}" method="POST">
             @csrf
             <button class="btn btn-success mt-3">

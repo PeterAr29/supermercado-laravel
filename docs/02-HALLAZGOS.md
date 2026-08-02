@@ -41,6 +41,12 @@ Auditoría del 2026-08-01 sobre `routes/`, 8 controladores de dominio, 10 modelo
 | H-33 | 🔴 | Datos | `php artisan test` borraba la base de datos de desarrollo | 1 |
 | H-34 | 🟠 | Gestión | Sin copia de seguridad de la base antes de cada fase | 6 |
 | H-35 | 🔴 | Dominio | Las ventas no descuentan stock | 3 |
+| H-36 | 🔴 | Seguridad | Se podía borrar la línea de carrito de cualquiera | 2 |
+| H-37 | 🟠 | Bug | El cast a enum rompió comparaciones y vistas | 2 |
+| H-38 | 🟡 | Bug | El select de unidad de medida nunca guardaba nada | 2 |
+| H-39 | 🟠 | Esquema | Un usuario puede acabar con dos carritos a la vez | 3 |
+| H-40 | 🟡 | Bug | Asignar dos veces el mismo producto a un proveedor devuelve 500 | 3 |
+| H-41 | 🟢 | Bug | El carrito acepta productos ya retirados del catálogo | 3 |
 
 ---
 
@@ -98,6 +104,105 @@ Es el peor tipo de bug: valida, guarda, redirige con "creado correctamente" y pi
 `DB::beginTransaction()` sin `try/catch`. Si el `foreach` falla a mitad (producto inexistente, pivot nulo — muy probable dado H-04), queda una orden huérfana con total 0 y la transacción sin cerrar.
 
 **Arreglo:** `DB::transaction(function () { ... })` con closure.
+
+### H-36 — Se podía borrar la línea de carrito de cualquiera
+**Descubierto en la Fase 2 al reescribir el controlador.** *(Resuelto en la misma fase.)*
+
+**Dónde:** `app/Http/Controllers/CarritoController.php::eliminar`
+
+```php
+$item = CarritoItem::findOrFail($id);
+$item->delete();
+```
+
+No comprobaba que la línea perteneciera al carrito de quien la borra. Bastaba con conocer (o adivinar) un id para vaciarle el carrito a otra persona — una referencia directa insegura a objeto.
+
+Pasó desapercibido en la Fase 1 porque esa fase miró **quién puede entrar** a cada ruta, no **sobre qué datos** puede actuar quien ya entró.
+
+**Arreglo:** `CarritoItem::where('carrito_id', $carrito->id)->findOrFail($id)` — un id ajeno devuelve 404.
+
+### H-37 — El cast a enum rompió comparaciones y vistas
+**Regresión de la propia Fase 2, detectada al verificar.** *(Resuelta antes de cerrar.)*
+
+Añadir `'estado' => EstadoOrdenCompra::class` a `$casts` convirtió el valor en objeto, y tres sitios seguían tratándolo como texto:
+
+| Dónde | Antes | Consecuencia |
+|---|---|---|
+| `OrdenCompraController::recibir` | `$orden->estado === 'recibido'` | Siempre `false`: **una orden se podía recibir dos veces**, duplicando el stock |
+| `ordenes/index`, `ordenes/show` | `{{ $orden->estado }}` | **Error fatal:** `Object of class EstadoOrdenCompra could not be converted to string` |
+| `ordenes/index`, `ordenes/show` | `$orden->estado == 'pendiente'` | Siempre `false`: el botón de recepción no aparecía nunca |
+
+**Arreglo:** métodos `estaPendiente()` y `estaRecibida()` en `OrdenCompra` (las vistas no deben comparar enums a mano) y `etiqueta()` en el enum para mostrarlo.
+
+**Lección:** añadir un cast de enum **no es un cambio local**. Obliga a revisar toda comparación y toda impresión de ese campo. Igual que `SoftDeletes` en H-32. Añadido a `04-CONVENCIONES.md`.
+
+### H-38 — El select de unidad de medida nunca guardaba nada
+**Descubierto en la Fase 2.** *(Resuelto en la misma fase.)*
+
+**Dónde:** `ProductoController::store`/`update` · `productos/create.blade.php` · `productos/edit.blade.php`
+
+La columna `unidad_medida` se añadió en diciembre y el formulario tenía su `<select>` desde entonces, pero:
+
+1. `unidad_medida` no estaba en `$fillable`
+2. El controlador construía el array a mano **sin incluirla**
+3. El `select` de edición **no preseleccionaba** el valor actual
+
+El resultado es que el campo llevaba meses siendo decorativo: todo producto creado desde la aplicación se quedaba con el valor por defecto (`und`), aunque el usuario eligiera `kg`.
+
+**Arreglo:** al `$fillable`, validación con `Rule::enum`, el controlador la recoge, y ambos `select` se generan desde `UnidadMedida::cases()` con preselección.
+
+### H-39 — Un usuario puede acabar con dos carritos a la vez
+**Descubierto al revisar el diff de la Fase 2.** *(Asignado a la Fase 3.)*
+
+**Dónde:** `carritos.user_id` · `User::carrito()` · `CarritoController::obtenerCarrito()`
+
+La Fase 2 impuso índices únicos en `proveedor_producto` y `carrito_items`, pero dejó fuera el tercer sitio que los necesitaba. La columna `carritos.user_id` sigue **sin índice único y sin clave foránea**, mientras el código la trata como si fuera única:
+
+```php
+return Auth::user()->carrito()->firstOrCreate([]);   // hasOne
+```
+
+`firstOrCreate` no es atómico: dos peticiones simultáneas del mismo usuario (dos pestañas, un doble clic en "añadir") pueden leer "no hay carrito" a la vez y crear dos filas. A partir de ahí `hasOne` devuelve siempre una de las dos y la otra queda huérfana con líneas dentro: **el usuario ve desaparecer productos que sí añadió**.
+
+Además, sin clave foránea, borrar un usuario deja su carrito apuntando a un `user_id` que ya no existe.
+
+**Arreglo (Fase 3):** índice único en `carritos.user_id` + clave foránea con `cascadeOnDelete()`, previa deduplicación de los carritos ya existentes (mismo patrón que usó H-25 para el pivot).
+
+### H-40 — Asignar dos veces el mismo producto a un proveedor devuelve 500
+**Descubierto al revisar el diff de la Fase 2.** *(Asignado a la Fase 3.)*
+
+**Dónde:** `app/Http/Controllers/ProveedorProductoController.php::store`
+
+Efecto colateral del índice único `proveedor_producto_unico` que añade H-25. Antes, un `attach()` repetido creaba una fila duplicada en silencio; ahora la base lo rechaza:
+
+```php
+$proveedor->productos()->attach($request->producto_id, [...]);   // sin validación previa
+```
+
+```
+SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry
+```
+
+El formulario `create()` solo lista productos **no** asignados, así que hace falta un POST directo o un envío doble para provocarlo — pero cuando ocurre, el usuario recibe un error 500 en vez de un mensaje de validación.
+
+Que la base lo rechace es lo correcto; lo que falta es que el controlador lo prevea.
+
+**Arreglo (Fase 3):** regla `Rule::unique('proveedor_producto')->where('proveedor_id', $proveedor->id)` en la validación. Encaja con H-12 (Form Requests).
+
+### H-41 — El carrito acepta productos ya retirados del catálogo
+**Descubierto al revisar el diff de la Fase 2.** *(Asignado a la Fase 3.)*
+
+**Dónde:** `app/Http/Controllers/CarritoController.php::agregar`
+
+```php
+'producto_id' => 'required|exists:productos,id',
+```
+
+`exists` consulta la tabla en crudo, sin el filtro de `SoftDeletes`: **un producto retirado (H-02) sigue pasando la validación**. La línea se crea, y acto seguido `itemsVigentes()` la esconde por diseño.
+
+El resultado es un mensaje que miente: sale "Producto agregado al carrito" y el carrito sigue igual. No es peligroso — H-32 ya impide que se pague — pero es exactamente el tipo de incoherencia que hace dudar de si la aplicación funciona.
+
+**Arreglo (Fase 3):** `Rule::exists('productos', 'id')->whereNull('deleted_at')`.
 
 ### H-35 — Las ventas no descuentan stock
 **Descubierto al replantear el roadmap (2026-08-01).** *(Asignado a la Fase 3.)*
