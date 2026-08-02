@@ -53,6 +53,12 @@ Auditoría del 2026-08-01 sobre `routes/`, 8 controladores de dominio, 10 modelo
 | H-45 | 🟠 | Regresión | El refactor de la Fase 3 rompió la codificación de 4 vistas | 4 ✅ |
 | H-46 | 🟡 | Bug | El RUC del proveedor no era único ni tenía longitud | 4 ✅ |
 | H-47 | 🔴 | Bug | El perfil y el dashboard se pintaban vacíos | 5 ✅ |
+| H-48 | 🟡 | Vistas | `/dashboard` sigue siendo el marcador de posición de Breeze | 7 |
+| H-49 | 🟢 | Vistas | La paginación se imprime en inglés | 7 |
+| H-50 | 🟡 | Vistas | Un campo de la ficha de producto está fuera del formulario | 7 |
+| H-51 | 🟢 | Vistas | El kardex atribuye el saldo inicial a «Invitado» | 7 |
+
+> **H-48…H-51 salen de la revisión en navegador del 2026-08-02**, después de cerrar la Fase 6: se arrancó la app y se recorrieron 21 pantallas con un navegador de verdad. Ninguno lo habrían encontrado los tests, porque los cuatro son cosas que **se ven**, no que fallen: las cuatro pantallas responden `200` y hacen lo que el código dice que hacen.
 
 ---
 
@@ -580,6 +586,37 @@ Un cliente del supermercado no debería poder tocar nada de eso.
 - `proveedor_producto` sin timestamps
 - `add_categoria_id_to_productos_table.php` tiene el `down()` vacío → migración no reversible
 
+### H-48 — `/dashboard` sigue siendo el marcador de posición de Breeze
+**Abierto.** *(Asignado a la Fase 7.)* · Detectado en la revisión en navegador del 2026-08-02.
+
+**Dónde:** `resources/views/dashboard.blade.php` · `routes/web.php:103`
+
+Es **la pantalla a la que aterrizan los dos roles al iniciar sesión**, y lo que enseña es lo que trae Laravel Breeze de fábrica:
+
+```blade
+{{ __('Dashboard') }}
+{{ __("You're logged in!") }}
+```
+
+Un título en inglés y una frase que le dice al usuario algo que ya sabe. La ruta es `fn () => view('dashboard')`: no hay controlador ni datos detrás.
+
+**Ojo con darlo por cerrado leyendo el CHANGELOG.** H-47 arregló que esta pantalla **pintara algo** —antes salía en blanco porque `AppLayout` apuntaba a un layout que nunca imprimía `$slot`—. Que pinte no significa que diga nada: el arreglo de la Fase 5 fue de fontanería, y el contenido nunca se escribió.
+
+**Arreglo (Fase 7):** decidir a dónde va cada rol tras iniciar sesión. El administrador tiene `/admin`; el cliente tiene `/mi-cuenta` y `/mis-pedidos`. Una pantalla intermedia en inglés que no lleva a ninguno de los dos sitios no es de nadie.
+
+### H-50 — Un campo de la ficha de producto está fuera del formulario
+**Abierto.** *(Asignado a la Fase 7.)* · Detectado en la revisión en navegador del 2026-08-02.
+
+**Dónde:** `resources/views/productos/show.blade.php:40-49` (el campo) y `:69` (el `<form>`)
+
+La ficha pregunta **«¿Qué debemos considerar al comprar este producto?»** con un textarea y el ejemplo «Tipo de corte, tamaño, color…». Es una promesa razonable en un supermercado: quien compra queso o carne quiere pedir el corte.
+
+El textarea cierra en la línea 49. El `<form>` que envía al carrito abre en la 69. **El campo está fuera**, así que no viaja en el POST: no tiene `name`, nadie lo lee y nada lo guarda. El cliente escribe su indicación, pulsa «Agregar al carrito», el producto entra — y su nota se evapora sin un aviso.
+
+Es el mismo patrón que H-05 (el contacto del proveedor que se descartaba en silencio) y H-42 (el stock que el formulario nunca enviaba): **la pantalla promete un dato que la aplicación no recoge**, y no falla nada, que es lo que lo hace difícil de ver.
+
+**Arreglo (Fase 7):** o el campo entra en el formulario y su nota se guarda en la línea de carrito y viaja a la de venta, o se quita de la ficha. Lo que no puede quedarse es pidiendo algo que nadie va a leer. **Es una decisión de producto, no de código**: guardarlo obliga a una columna nueva y a enseñarlo en el pedido.
+
 ---
 
 ## 🟢 Bajos
@@ -654,3 +691,35 @@ Solo están los de Breeze (auth y perfil). Cero cobertura de carrito, checkout, 
 - **Git no se entera y no tiene por qué:** `.git` viaja con el resto y el historial queda intacto. Lo que cambia es dónde está el repositorio, no el repositorio
 
 **Verificado tras el traslado:** `git log` y `git status` intactos con `main` sincronizado · `php artisan test` 49 pasan · `npm run build` reconstruye los assets · y las pantallas se sirven de verdad —`/`, `/productos` y `/carrito` devuelven HTML con productos reales y el enlace a la página 2—, no solo un `200`.
+
+### H-49 — La paginación se imprime en inglés
+**Abierto.** *(Asignado a la Fase 7.)* · Detectado en la revisión en navegador del 2026-08-02.
+
+**Dónde:** no hay carpeta `lang/` en el proyecto
+
+Debajo del catálogo, con el resto de la tienda en español, se lee:
+
+```
+Showing 1 to 12 of 40 results
+```
+
+Sin `lang/es`, el paginador imprime las cadenas por defecto de Laravel. Aparece en las **siete** pantallas que paginan: el catálogo de la tienda y, en el panel, productos, proveedores, órdenes, inventario, kardex y el catálogo de cada proveedor.
+
+Es pequeño, pero es exactamente lo que la Fase 5 fue a corregir con H-18: **una sola voz**. Convivían cuatro marcas distintas; ahora conviven dos idiomas en la misma pantalla.
+
+**Arreglo (Fase 7):** publicar las traducciones (`php artisan lang:publish`) y traducir `pagination.php`, o pasar `APP_LOCALE=es`. Aparecido al paginar el catálogo, que es de la Fase 6: **la paginación se añadió sin mirar cómo se leía**.
+
+### H-51 — El kardex atribuye el saldo inicial a «Invitado»
+**Abierto.** *(Asignado a la Fase 7.)* · Detectado en la revisión en navegador del 2026-08-02.
+
+**Dónde:** `resources/views/admin/inventario/kardex.blade.php:119`
+
+```blade
+{{ $movimiento->user->name ?? 'Invitado' }}
+```
+
+Los movimientos de apertura los escribe `InventarioInicialSeeder`, que corre por consola y sin sesión: su `user_id` es null. La columna «Quién» los atribuye entonces a **«Invitado»**, que en un libro de inventario se lee como una persona que entró en la tienda y movió stock.
+
+No es un fallo de datos —el `null` es correcto: nadie los hizo a mano—, sino de cómo se cuenta. Un kardex existe para responder *quién movió esto*, y ahí «Invitado» es la peor respuesta posible: parece un dato, y es la ausencia de uno.
+
+**Arreglo (Fase 7):** distinguir los dos casos. Sin usuario y con origen (venta u orden), lo movió el documento; sin usuario y sin origen, lo movió el **sistema**. «Invitado» solo tiene sentido en la tienda, hablando de un comprador sin cuenta.

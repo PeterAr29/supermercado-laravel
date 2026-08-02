@@ -44,7 +44,7 @@ El proyecto creció **por capas incrementales**, cada una añadida sin revisar l
 
 ### El reordenamiento — agosto 2026
 
-Auditoría de 47 hallazgos y siete fases de trabajo, del 2026-08-01 al 2026-08-02:
+Auditoría de 47 hallazgos y siete fases de trabajo, del 2026-08-01 al 2026-08-02. La revisión en navegador del cierre añadió cuatro más (`H-48`…`H-51`), que forman la Fase 7:
 
 | Fase | Qué dejó |
 |---|---|

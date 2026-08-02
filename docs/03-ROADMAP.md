@@ -16,6 +16,7 @@ Cada fase tiene **objetivo**, **alcance cerrado**, **checklist** y **criterio de
 | 4 | Separación de capas (MVC real) | [#4](https://github.com/PeterAr29/supermercado-laravel/issues/4) ✅ | H-12, H-13, H-19, H-20, H-45, H-46 |
 | 5 | Capa de presentación | [#5](https://github.com/PeterAr29/supermercado-laravel/issues/5) ✅ | H-15…H-18, H-43, H-47 |
 | 6 | Robustez y calidad | [#6](https://github.com/PeterAr29/supermercado-laravel/issues/6) ✅ | H-22, H-23, H-24, H-34 |
+| 7 | Lo que solo se ve en pantalla | *(sin issue todavía)* | H-48…H-51 |
 | — | Decisión sobre carpeta anidada | [#7](https://github.com/PeterAr29/supermercado-laravel/issues/7) ✅ | H-27 |
 
 ### Cambio de plan — 2026-08-01
@@ -457,6 +458,41 @@ Ninguno de código. Sí una corrección de documentación: `04-CONVENCIONES.md` 
 `php artisan pint` desde la Fase 0, y ese comando no existe — Pint es un binario.
 El paso 3 del cierre de fase llevaba seis fases sin poder ejecutarse tal y como
 estaba escrito.
+
+---
+
+## Fase 7 — Lo que solo se ve en pantalla ⬜
+
+**Objetivo:** que lo que la tienda **enseña** esté a la altura de lo que hace.
+
+**Por qué existe esta fase:** decidida el 2026-08-02, después de cerrar la Fase 6. Con el roadmap terminado y 49 tests en verde, se arrancó la aplicación y se recorrieron **21 pantallas con un navegador de verdad**. Salieron cuatro cosas que ninguna de las seis fases anteriores había visto — y no por descuido: **las cuatro pantallas responden `200` y hacen exactamente lo que su código dice**. Son defectos de lo que se lee, no de lo que se ejecuta.
+
+Es la tercera vez que este proyecto tropieza con lo mismo. H-45 (codificación rota) y H-47 (pantalla en blanco) pasaron sus verificaciones porque respondían `200`. La Fase 6 respondió a eso haciendo que los tests miraran el HTML. Esta fase responde a lo siguiente: **un test mira el HTML que se le dice que mire.** Ninguna aserción iba a preguntar por qué el paginador habla inglés, ni si un textarea está dentro del `<form>`.
+
+### Checklist
+
+**Bloque A — La pantalla de después del login** *(H-48)* 🟡
+- [ ] Decidir a dónde va cada rol al iniciar sesión: el administrador tiene `/admin`; el cliente, `/mi-cuenta` y `/mis-pedidos`
+- [ ] Retirar o reescribir `dashboard.blade.php`, que hoy es el marcador de posición de Breeze —«Dashboard» / «You're logged in!»— en inglés
+
+**Bloque B — Una sola voz** *(H-49)* 🟢
+- [ ] Traducir la paginación: afecta a **siete** pantallas, la del catálogo y seis del panel
+- [ ] Revisar que no quede ninguna otra cadena del framework en inglés a la vista
+
+**Bloque C — El campo que no recoge nada** *(H-50)* 🟡 — *requiere decisión*
+- [ ] Decidir: la indicación del cliente («tipo de corte, tamaño…») **se guarda** —columna nueva en la línea de carrito, que viaja a la de venta y se enseña en el pedido— **o el campo se retira de la ficha**
+- [ ] Ejecutar la decisión. Lo que no puede quedarse es pidiendo un dato que nadie lee
+
+**Bloque D — Quién movió el stock** *(H-51)* 🟢
+- [ ] El kardex distingue *sin usuario y con origen* (lo movió el documento) de *sin usuario y sin origen* (lo movió el sistema). «Invitado» es un comprador de la tienda, no el autor de un asiento
+
+### Criterio de aceptación
+
+Un recorrido en navegador de las mismas 21 pantallas no encuentra ninguna cadena del framework en inglés a la vista, ningún campo que pida datos que no se guardan, y ninguna pantalla que no sepa a quién sirve. **Se comprueba mirando, que es como salieron.**
+
+### Nota de método
+
+Esta fase existe porque se arrancó la aplicación. Merece la pena que eso deje de ser un gesto excepcional al cerrar el roadmap: **al terminar cualquier fase que toque vistas, se abre la aplicación y se mira**. Los tests dicen que no se ha roto nada; solo el navegador dice si se entiende.
 
 ---
 

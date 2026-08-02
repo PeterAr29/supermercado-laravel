@@ -204,11 +204,18 @@ convierte el tablero en decoración.
    se pintaba **vacío** y respondía `200`, con un test en verde durante meses). Toda
    comprobación de una pantalla afirma algo **que tiene que aparecer en el HTML**.
 2. `php artisan test` pasa.
-3. `./vendor/bin/pint` ejecutado. **No es `php artisan pint`**: Pint es un binario,
+3. **Si la fase toca vistas, se arranca la aplicación y se mira.** No es opcional
+   y no lo sustituye ningún test: una aserción comprueba el HTML **que se le dice
+   que comprueba**. H-48…H-51 —el dashboard en inglés de la plantilla, el
+   paginador en inglés, un campo fuera de su `<form>` y un asiento firmado por
+   «Invitado»— salieron de abrir la tienda al terminar el roadmap, con 49 tests en
+   verde. Las cuatro pantallas respondían `200` y hacían lo que su código decía.
+   Los tests dicen que no se ha roto nada; solo el navegador dice si se entiende.
+4. `./vendor/bin/pint` ejecutado. **No es `php artisan pint`**: Pint es un binario,
    no un comando de Artisan, y `php artisan pint` responde "Command not defined".
-4. Los hallazgos cerrados se marcan en `02-HALLAZGOS.md`.
-5. Hallazgos nuevos descubiertos por el camino: **se anotan, no se arreglan** en la fase en curso.
-6. **Repasar la checklist de la issue una por una** y marcar solo lo hecho. Lo que
+5. Los hallazgos cerrados se marcan en `02-HALLAZGOS.md`.
+6. Hallazgos nuevos descubiertos por el camino: **se anotan, no se arreglan** en la fase en curso.
+7. **Repasar la checklist de la issue una por una** y marcar solo lo hecho. Lo que
    quede sin marcar se explica en un comentario de cierre: si no bloquea el criterio
    de aceptación la fase se cierra igual, pero el hueco queda escrito y con dueño.
-7. La tarjeta del tablero se mueve a `Done`.
+8. La tarjeta del tablero se mueve a `Done`.

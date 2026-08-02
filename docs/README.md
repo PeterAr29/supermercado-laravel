@@ -7,7 +7,7 @@ Documentación de gestión, no de código. Aquí se decide **qué se hace, en qu
 | Documento | Para qué sirve | Cuándo se lee |
 |---|---|---|
 | [01-CONTEXTO.md](01-CONTEXTO.md) | Qué es el proyecto, cómo llegó a ser lo que es, arquitectura actual | Al entrar al proyecto |
-| [02-HALLAZGOS.md](02-HALLAZGOS.md) | Inventario de deuda técnica con ID y severidad (`H-01`…`H-27`) | Antes de planificar |
+| [02-HALLAZGOS.md](02-HALLAZGOS.md) | Inventario de deuda técnica con ID y severidad (`H-01`…`H-51`) | Antes de planificar |
 | [03-ROADMAP.md](03-ROADMAP.md) | Fases de trabajo, alcance y criterio de aceptación de cada una | Antes de programar |
 | [04-CONVENCIONES.md](04-CONVENCIONES.md) | Reglas para que el proyecto no se vuelva a desordenar | Durante cada cambio |
 
@@ -34,7 +34,8 @@ Para evitar dos listas que se contradigan, el reparto es estricto:
 ## Estado actual
 
 - **Última fase cerrada:** 6 — Robustez y calidad ✅ ([#6](https://github.com/PeterAr29/supermercado-laravel/issues/6))
-- **Siguiente:** ninguna. **El roadmap está completo**: las fases 0 a 6 están cerradas.
-- **No queda ningún hallazgo abierto.** H-27 —la carpeta anidada— se cerró el 2026-08-02 aplanándola ([#7](https://github.com/PeterAr29/supermercado-laravel/issues/7)): la raíz del proyecto es ya la raíz del repositorio.
-- Lo que venga ahora sale del **backlog** de `03-ROADMAP.md`, y lo primero es decidir qué entra y en qué orden.
+- **Siguiente:** 7 — Lo que solo se ve en pantalla (`H-48`…`H-51`). **Sin issue todavía.**
+- Las fases 0 a 6 están cerradas, y H-27 —la carpeta anidada— también: la raíz del proyecto es ya la raíz del repositorio ([#7](https://github.com/PeterAr29/supermercado-laravel/issues/7)).
+- **La Fase 7 salió de arrancar la aplicación y mirarla**, el 2026-08-02, con el roadmap ya dado por terminado. Cuatro defectos que ninguna de las seis fases vio, porque las cuatro pantallas responden `200` y hacen lo que su código dice.
+- Después de la Fase 7, lo que venga sale del **backlog** de `03-ROADMAP.md`.
 - **Roadmap replanteado el 2026-08-01:** se retira Google Sheets y se inserta la Fase 3 — Paneles y roles ([#11](https://github.com/PeterAr29/supermercado-laravel/issues/11)). Las fases 3-5 antiguas pasan a 4-6.

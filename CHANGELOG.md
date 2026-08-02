@@ -205,7 +205,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## Fases pendientes
 
-Ninguna. Las fases 0 a 6 del [roadmap](docs/03-ROADMAP.md) están cerradas, y con
-H-27 resuelto **no queda ningún hallazgo abierto** de los 47 auditados.
+| Fase | Nombre | Estado |
+|---|---|---|
+| 7 | Lo que solo se ve en pantalla (`H-48`…`H-51`) | ⬜ Pendiente |
 
-Lo que venga ahora sale del backlog, al final del roadmap.
+Las fases 0 a 6 están cerradas, y H-27 también. La **Fase 7** apareció el 2026-08-02
+al arrancar la aplicación y recorrerla en un navegador con el roadmap ya dado por
+terminado: cuatro defectos de lo que se lee, no de lo que se ejecuta. Detalle en
+[`docs/03-ROADMAP.md`](docs/03-ROADMAP.md).
+
+Después de la Fase 7, lo que venga sale del backlog, al final del roadmap.
