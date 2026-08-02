@@ -61,6 +61,9 @@ return [
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
+            // Ruta a mysqldump para `php artisan db:respaldo` (H-34). Vacío:
+            // se prueba la ruta de XAMPP y después el PATH.
+            'dump_binario' => env('DB_DUMP_BINARIO'),
         ],
 
         'pgsql' => [
