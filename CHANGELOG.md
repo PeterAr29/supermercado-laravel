@@ -247,3 +247,8 @@ Ninguna. Las fases 0 a 7 del [roadmap](docs/03-ROADMAP.md) están cerradas, y co
 H-27 y H-51 resueltos **no queda ningún hallazgo abierto** de los 51 registrados.
 
 Lo que venga ahora sale del backlog, al final del roadmap.
+
+---
+
+[No publicado]: https://github.com/PeterAr29/supermercado-laravel/compare/v1.0.0...main
+[1.0.0]: https://github.com/PeterAr29/supermercado-laravel/releases/tag/v1.0.0
