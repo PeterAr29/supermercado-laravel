@@ -47,9 +47,15 @@
 
         {{-- medida --}}
         <label class="block font-semibold mt-3">Unidad de venta</label>
+            {{-- Preselecciona la unidad actual: sin esto, editar un producto
+                 vendido por kg lo cambiaba a unidad en silencio. --}}
             <select name="unidad_medida" class="w-full border rounded p-2">
-                <option value="und">Unidad</option>
-                <option value="kg">Kilogramo</option>
+                @foreach(App\Enums\UnidadMedida::cases() as $unidad)
+                    <option value="{{ $unidad->value }}"
+                        @selected(old('unidad_medida', $producto->unidad_medida?->value) === $unidad->value)>
+                        {{ $unidad->etiqueta() }}
+                    </option>
+                @endforeach
             </select>
             
         {{-- Botones --}}

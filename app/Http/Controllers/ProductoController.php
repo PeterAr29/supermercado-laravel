@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Producto;
+use App\Enums\UnidadMedida;
 use App\Models\Categoria;
-use Illuminate\Http\Request;
+use App\Models\Producto;
 use App\Services\ProveedorSheetService;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ProductoController extends Controller
 {
@@ -16,7 +18,7 @@ class ProductoController extends Controller
     {
         $productos = Producto::with('categoria')
             ->when($request->buscar, function ($q) use ($request) {
-                $q->where('nombre', 'like', '%' . $request->buscar . '%');
+                $q->where('nombre', 'like', '%'.$request->buscar.'%');
             })
             ->when($request->categoria, function ($q) use ($request) {
                 $q->where('categoria_id', $request->categoria);
@@ -34,6 +36,7 @@ class ProductoController extends Controller
     public function create()
     {
         $categorias = Categoria::all();
+
         return view('productos.create', compact('categorias'));
     }
 
@@ -48,6 +51,9 @@ class ProductoController extends Controller
             'precio' => 'required|numeric',
             'imagen' => 'required',
             'categoria_id' => 'required|exists:categorias,id',
+            // El select existía en el formulario desde diciembre, pero el
+            // controlador nunca lo recogía: no se guardaba nunca (H-25).
+            'unidad_medida' => ['required', Rule::enum(UnidadMedida::class)],
         ]);
 
         Producto::create([
@@ -56,6 +62,7 @@ class ProductoController extends Controller
             'precio' => $request->precio,
             'imagen' => $request->imagen,
             'categoria_id' => $request->categoria_id,
+            'unidad_medida' => $request->unidad_medida,
         ]);
 
         return redirect()->route('productos.index')
@@ -68,6 +75,7 @@ class ProductoController extends Controller
     public function edit(Producto $producto)
     {
         $categorias = Categoria::all();
+
         return view('productos.edit', compact('producto', 'categorias'));
     }
 
@@ -82,6 +90,9 @@ class ProductoController extends Controller
             'precio' => 'required|numeric',
             'imagen' => 'required',
             'categoria_id' => 'required|exists:categorias,id',
+            // El select existía en el formulario desde diciembre, pero el
+            // controlador nunca lo recogía: no se guardaba nunca (H-25).
+            'unidad_medida' => ['required', Rule::enum(UnidadMedida::class)],
         ]);
 
         $producto->update([
@@ -90,6 +101,7 @@ class ProductoController extends Controller
             'precio' => $request->precio,
             'imagen' => $request->imagen,
             'categoria_id' => $request->categoria_id,
+            'unidad_medida' => $request->unidad_medida,
         ]);
 
         return redirect()->route('productos.index')
@@ -115,7 +127,7 @@ class ProductoController extends Controller
         $producto = Producto::with('categoria')->findOrFail($id);
 
         // Proveedores desde Google Sheets
-        $proveedores = (new ProveedorSheetService())
+        $proveedores = (new ProveedorSheetService)
             ->obtenerPorProducto($producto->id);
 
         // Productos similares (misma categoría, excluyendo el actual)

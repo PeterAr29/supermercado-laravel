@@ -28,8 +28,8 @@
                 <td>{{ $orden->proveedor->nombre }}</td>
                 <td>S/ {{ number_format($orden->total, 2) }}</td>
                 <td>
-                    <span class="badge bg-{{ $orden->estado == 'pendiente' ? 'warning' : 'success' }}">
-                        {{ $orden->estado }}
+                    <span class="badge bg-{{ $orden->estaPendiente() ? 'warning' : 'success' }}">
+                        {{ $orden->estado->etiqueta() }}
                     </span>
                 </td>
                 <td>{{ $orden->created_at->format('d/m/Y') }}</td>

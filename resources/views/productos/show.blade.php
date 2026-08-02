@@ -32,7 +32,7 @@
                     S/ {{ number_format($producto->precio, 2) }}
                 </span>
                 <span class="text-gray-500 text-sm">
-                    x {{ $producto->unidad_medida === 'kg' ? 'Kg' : 'Und' }}
+                    x {{ $producto->unidad_medida?->sufijo() ?? 'und' }}
                 </span>
             </div>
 

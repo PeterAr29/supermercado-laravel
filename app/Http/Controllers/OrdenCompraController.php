@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Proveedor;
+use App\Enums\EstadoOrdenCompra;
 use App\Models\OrdenCompra;
 use App\Models\OrdenCompraItem;
+use App\Models\Proveedor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -15,6 +16,7 @@ class OrdenCompraController extends Controller
     public function index()
     {
         $ordenes = OrdenCompra::with('proveedor')->orderBy('id', 'desc')->paginate(10);
+
         return view('ordenes.index', compact('ordenes'));
     }
 
@@ -22,6 +24,7 @@ class OrdenCompraController extends Controller
     public function create()
     {
         $proveedores = Proveedor::all();
+
         return view('ordenes.create', compact('proveedores'));
     }
 
@@ -29,6 +32,7 @@ class OrdenCompraController extends Controller
     public function productosProveedor($proveedor_id)
     {
         $proveedor = Proveedor::findOrFail($proveedor_id);
+
         return response()->json($proveedor->productos);
     }
 
@@ -37,8 +41,8 @@ class OrdenCompraController extends Controller
     {
         $request->validate([
             'proveedor_id' => 'required|exists:proveedores,id',
-            'productos'    => 'required|array',
-            'cantidades'   => 'required|array',
+            'productos' => 'required|array',
+            'cantidades' => 'required|array',
         ]);
 
         $proveedor = Proveedor::findOrFail($request->proveedor_id);
@@ -47,8 +51,8 @@ class OrdenCompraController extends Controller
 
             $orden = OrdenCompra::create([
                 'proveedor_id' => $proveedor->id,
-                'estado'       => 'pendiente',
-                'total'        => 0,
+                'estado' => EstadoOrdenCompra::Pendiente,
+                'total' => 0,
             ]);
 
             $total = 0;
@@ -72,16 +76,16 @@ class OrdenCompraController extends Controller
                     ]);
                 }
 
-                $precio   = $asignado->pivot->precio_compra;
+                $precio = $asignado->pivot->precio_compra;
                 $subtotal = $precio * $cantidad;
-                $total   += $subtotal;
+                $total += $subtotal;
 
                 OrdenCompraItem::create([
-                    'orden_id'    => $orden->id,
+                    'orden_id' => $orden->id,
                     'producto_id' => $producto_id,
-                    'cantidad'    => $cantidad,
-                    'precio'      => $precio,
-                    'subtotal'    => $subtotal,
+                    'cantidad' => $cantidad,
+                    'precio' => $precio,
+                    'subtotal' => $subtotal,
                 ]);
             }
 
@@ -101,13 +105,14 @@ class OrdenCompraController extends Controller
     public function show(OrdenCompra $orden)
     {
         $orden->load('items.producto', 'proveedor');
+
         return view('ordenes.show', compact('orden'));
     }
 
     // Marcar como recibida + actualizar stock
     public function recibir(OrdenCompra $orden)
     {
-        if ($orden->estado === 'recibido') {
+        if ($orden->estaRecibida()) {
             return back()->with('error', 'La orden ya fue recibida.');
         }
 
@@ -116,7 +121,7 @@ class OrdenCompraController extends Controller
                 $item->producto->increment('stock', $item->cantidad);
             }
 
-            $orden->update(['estado' => 'recibido']);
+            $orden->update(['estado' => EstadoOrdenCompra::Recibido]);
         });
 
         return back()->with('success', 'Orden marcada como recibida y stock actualizado.');

@@ -17,6 +17,18 @@ class OrdenCompraItem extends Model
         'subtotal',
     ];
 
+    protected $casts = [
+        'cantidad' => 'integer',
+        'precio' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+    ];
+
+    /** Relación inversa que faltaba (H-09). */
+    public function orden()
+    {
+        return $this->belongsTo(OrdenCompra::class, 'orden_id');
+    }
+
     public function producto()
     {
         // withTrashed: una orden ya emitida debe seguir resolviendo su producto
