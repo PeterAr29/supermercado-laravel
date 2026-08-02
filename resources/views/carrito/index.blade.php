@@ -1,114 +1,111 @@
-@extends('layouts.layout')
+@extends('layouts.tienda')
+
+@section('titulo', 'Carrito')
 
 @section('content')
-<div class="max-w-5xl mx-auto mt-10">
 
-    <h1 class="text-2xl font-bold mb-6">🛒 Tu Carrito de Compras</h1>
+<div class="max-w-5xl mx-auto px-4">
 
-    @if(session('success'))
-        <div class="bg-green-200 text-green-800 p-3 mb-4 rounded">
-            {{ session('success') }}
-        </div>
-    @endif
+    <h1 class="text-2xl font-bold mb-6">Tu carrito</h1>
 
-    @if(session('error'))
-        <div class="bg-red-200 text-red-800 p-3 mb-4 rounded">
-            {{ session('error') }}
-        </div>
-    @endif
+    {{-- Los mensajes flash los pinta <x-alerta-flash> desde el layout: estaban
+         copiados en seis vistas con seis combinaciones de color distintas. --}}
 
     @if($items->isEmpty())
-        <div class="bg-yellow-100 text-yellow-800 p-4 rounded">
-            Tu carrito está vacío.
-        </div>
+        <div class="bg-white rounded-lg shadow p-8 text-center">
+            <p class="text-gray-500">Tu carrito está vacío.</p>
 
-        <a href="{{ route('productos.index') }}" 
-           class="inline-block mt-4 bg-blue-600 text-white px-4 py-2 rounded">
-            Ver productos
-        </a>
+            <a href="{{ route('productos.index') }}"
+               class="inline-block mt-4 bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded">
+                Ver productos
+            </a>
+        </div>
     @else
 
-        <table class="w-full bg-white shadow rounded overflow-hidden mb-5">
-            <thead class="bg-gray-300">
-                <tr>
-                    <th class="p-3">Producto</th>
-                    <th class="p-3">Cantidad</th>
-                    <th class="p-3">Precio</th>
-                    <th class="p-3">Subtotal</th>
-                    <th class="p-3">Acciones</th>
-                </tr>
-            </thead>
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-100 text-left">
+                        <tr>
+                            <th class="px-5 py-3">Producto</th>
+                            <th class="px-5 py-3 text-right">Precio</th>
+                            <th class="px-5 py-3 text-right">Cantidad</th>
+                            <th class="px-5 py-3 text-right">Subtotal</th>
+                            <th class="px-5 py-3 text-right"></th>
+                        </tr>
+                    </thead>
 
-            <tbody>
-                {{--
-                    El total llega calculado desde CarritoService. Antes se
-                    sumaba aquí, en un `@php $total += ...` dentro del bucle:
-                    era la tercera fórmula distinta del mismo importe, y una
-                    vista que calcula puede enseñar un precio que no es el que
-                    se cobra (H-13).
-                --}}
-                @foreach($items as $item)
-                    <tr class="border-b">
-                        <td class="p-3">
-                            <strong>{{ $item->producto->nombre }}</strong>
-                        </td>
+                    <tbody>
+                        @foreach($items as $item)
+                            <tr class="border-b last:border-0">
+                                <td class="px-5 py-4">
+                                    <a href="{{ route('productos.show', $item->producto) }}"
+                                       class="font-medium hover:underline">
+                                        {{ $item->producto->nombre }}
+                                    </a>
 
-                        <td class="p-3">
-                            {{ $item->cantidad }}
-                        </td>
+                                    @if(! $item->producto->hayStock($item->cantidad))
+                                        <span class="block text-xs text-red-600 mt-0.5">
+                                            Solo quedan {{ $item->producto->stock }}
+                                        </span>
+                                    @endif
+                                </td>
 
-                        <td class="p-3 text-red-600">
-                            S/ {{ number_format($item->producto->precio, 2) }}
-                        </td>
+                                <td class="px-5 py-4 text-right whitespace-nowrap text-gray-600">
+                                    S/ {{ number_format($item->producto->precio, 2) }}
+                                </td>
 
-                        <td class="p-3 font-bold">
-                            S/ {{ number_format($item->subtotal, 2) }}
-                        </td>
+                                <td class="px-5 py-4 text-right">{{ $item->cantidad }}</td>
 
-                        <td class="p-3">
+                                {{-- El subtotal lo da el modelo y el total el
+                                     servicio: la vista no multiplica ni suma (H-13) --}}
+                                <td class="px-5 py-4 text-right font-medium whitespace-nowrap">
+                                    S/ {{ number_format($item->subtotal, 2) }}
+                                </td>
 
-                            {{-- Eliminar item --}}
-                            <form action="{{ route('carrito.eliminar', $item->id) }}" 
-                                  method="POST" 
-                                  class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" 
-                                        class="bg-red-600 text-white px-3 py-1 rounded">
-                                    Eliminar
-                                </button>
-                            </form>
+                                <td class="px-5 py-4 text-right">
+                                    <form action="{{ route('carrito.eliminar', $item->id) }}"
+                                          method="POST" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="text-red-600 hover:underline">Quitar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
 
-                        </td>
-                    </tr>
-
-                @endforeach
-            </tbody>
-        </table>
-
-        <div class="text-right text-xl font-bold mb-5">
-            Total a pagar: <span class="text-green-700">S/ {{ number_format($total, 2) }}</span>
+                    <tfoot>
+                        <tr class="bg-gray-50">
+                            <td colspan="3" class="px-5 py-4 text-right font-semibold">Total a pagar</td>
+                            <td class="px-5 py-4 text-right text-lg font-bold text-green-700 whitespace-nowrap">
+                                S/ {{ number_format($total, 2) }}
+                            </td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         </div>
 
-        {{-- Botón para vaciar carrito --}}
-        <form action="{{ route('carrito.vaciar') }}" method="POST" class="inline-block">
-            @csrf
-            <button type="submit" 
-                    class="bg-red-700 text-white px-4 py-2 rounded mr-3">
-                Vaciar carrito
-            </button>
-        </form>
+        <div class="flex flex-wrap items-center gap-3 mt-6">
+            <a href="{{ route('pago.confirmar') }}"
+               class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded font-semibold">
+                Proceder al pago
+            </a>
 
-        {{-- Ir a productos --}}
-        <a href="{{ route('productos.index') }}" 
-           class="bg-gray-700 text-white px-4 py-2 rounded">
-            Seguir comprando
-        </a>
+            <a href="{{ route('productos.index') }}"
+               class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded">
+                Seguir comprando
+            </a>
 
-        <a href="{{ route('pago.confirmar') }}" class="btn btn-success">
-            Proceder al Pago
-        </a>
-
+            <form action="{{ route('carrito.vaciar') }}" method="POST" class="ml-auto"
+                  onsubmit="return confirm('¿Vaciar el carrito entero?')">
+                @csrf
+                <button class="text-red-600 hover:underline">Vaciar carrito</button>
+            </form>
+        </div>
     @endif
 </div>
+
 @endsection

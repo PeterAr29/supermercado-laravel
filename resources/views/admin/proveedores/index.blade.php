@@ -1,67 +1,85 @@
 @extends('layouts.admin')
 
-@section('content')
-<div class="container mt-5">
+@section('titulo', 'Proveedores')
 
-    <div class="d-flex justify-content-between mb-4">
-        <h1 class="fw-bold">Proveedores</h1>
-        <a href="{{ route('admin.proveedores.create') }}" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Nuevo proveedor
+@section('content')
+
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold">Proveedores</h1>
+
+        <a href="{{ route('admin.proveedores.create') }}"
+           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+            + Nuevo proveedor
         </a>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <table class="table table-striped">
-                <thead class="table-dark">
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-100 text-left">
                     <tr>
-                        <th>Nombre</th>
-                        <th>RUC</th>
-                        <th>Teléfono</th>
-                        <th>Contacto</th>
-                        <th>Email</th>
-                        <th>Acciones</th>
+                        <th class="px-4 py-3">Nombre</th>
+                        <th class="px-4 py-3">RUC</th>
+                        <th class="px-4 py-3">Teléfono</th>
+                        <th class="px-4 py-3">Contacto</th>
+                        <th class="px-4 py-3">Email</th>
+                        <th class="px-4 py-3 text-right">Productos</th>
+                        <th class="px-4 py-3 text-right">Acciones</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    @foreach($proveedores as $proveedor)
-                    <tr>
-                        <td>{{ $proveedor->nombre }}</td>
-                        <td>{{ $proveedor->ruc }}</td>
-                        <td>{{ $proveedor->telefono }}</td>
-                        <td>{{ $proveedor->contacto_nombre }}</td>
-                        <td>{{ $proveedor->email }}</td>
+                    @forelse($proveedores as $proveedor)
+                        <tr class="border-b last:border-0 hover:bg-gray-50">
+                            <td class="px-4 py-3 font-medium">{{ $proveedor->nombre }}</td>
+                            <td class="px-4 py-3 text-gray-600 whitespace-nowrap">{{ $proveedor->ruc }}</td>
+                            <td class="px-4 py-3 text-gray-600 whitespace-nowrap">{{ $proveedor->telefono }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $proveedor->contacto_nombre }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $proveedor->email }}</td>
 
-                        <td>
-                            <a href="{{ route('admin.proveedores.edit', $proveedor) }}" class="btn btn-sm btn-warning">
-                                <i class="bi bi-pencil"></i>
-                            </a>
+                            <td class="px-4 py-3 text-right">
+                                <a href="{{ route('admin.proveedor.productos.index', $proveedor) }}"
+                                   class="text-blue-600 hover:underline">
+                                    {{ $proveedor->productos_count }}
+                                </a>
+                            </td>
 
-                            <form action="{{ route('admin.proveedores.destroy', $proveedor) }}" 
-                                  method="POST" 
-                                  style="display:inline-block;">
-                                @csrf
-                                @method('DELETE')
+                            <td class="px-4 py-3 text-right whitespace-nowrap space-x-1">
+                                <a href="{{ route('admin.proveedor.productos.index', $proveedor) }}"
+                                   class="inline-block bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded">
+                                    Catálogo
+                                </a>
 
-                                <button class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar proveedor?')">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
-                        </td>
+                                <a href="{{ route('admin.proveedores.edit', $proveedor) }}"
+                                   class="inline-block bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded">
+                                    Editar
+                                </a>
 
-                    </tr>
-                    @endforeach
+                                <form action="{{ route('admin.proveedores.destroy', $proveedor) }}"
+                                      method="POST" class="inline"
+                                      onsubmit="return confirm('¿Eliminar el proveedor «{{ $proveedor->nombre }}»?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded">
+                                        Eliminar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                                No hay proveedores todavía.
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
-
-            {{ $proveedores->links() }}
         </div>
     </div>
 
-</div>
+    <div class="mt-4">
+        {{ $proveedores->links() }}
+    </div>
+
 @endsection

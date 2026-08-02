@@ -1,25 +1,28 @@
 @extends('layouts.admin')
 
+@section('titulo', 'Nuevo proveedor')
+
 @section('content')
-<div class="container mt-5">
 
-    <h1 class="fw-bold mb-4">Registrar proveedor</h1>
+    <div class="max-w-3xl">
+        <h1 class="text-2xl font-bold mb-6">Registrar proveedor</h1>
 
-    <div class="card shadow p-4">
-        <form action="{{ route('admin.proveedores.store') }}" method="POST">
+        <form action="{{ route('admin.proveedores.store') }}" method="POST"
+              class="bg-white rounded-lg shadow p-6">
             @csrf
 
-            @include('admin.proveedores.form')
+            @include('admin.proveedores.form', ['proveedor' => null])
 
-            <button class="btn btn-success mt-3">
-                <i class="bi bi-check2-circle"></i> Guardar
-            </button>
+            <div class="flex items-center gap-4 mt-6 pt-6 border-t">
+                <button class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded">
+                    Guardar
+                </button>
 
-            <a href="{{ route('admin.proveedores.index') }}" class="btn btn-secondary mt-3">
-                Cancelar
-            </a>
-
+                <a href="{{ route('admin.proveedores.index') }}" class="text-gray-600 hover:underline">
+                    Cancelar
+                </a>
+            </div>
         </form>
     </div>
-</div>
+
 @endsection
