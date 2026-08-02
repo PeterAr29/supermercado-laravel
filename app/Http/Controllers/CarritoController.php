@@ -2,17 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\StockInsuficienteException;
 use App\Models\Carrito;
 use App\Models\CarritoItem;
 use App\Models\Producto;
 use App\Models\Venta;
+use App\Services\InventarioService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\Rule;
 
 class CarritoController extends Controller
 {
+    public function __construct(private readonly InventarioService $inventario) {}
+
     /**
      * Carrito activo.
      *
@@ -69,7 +74,10 @@ class CarritoController extends Controller
     public function agregar(Request $request)
     {
         $datos = $request->validate([
-            'producto_id' => 'required|exists:productos,id',
+            // 'exists' a secas consulta la tabla en crudo, sin el filtro de
+            // SoftDeletes: un producto retirado pasaba la validación y salía
+            // "Producto agregado al carrito" sin agregar nada (H-41).
+            'producto_id' => ['required', Rule::exists('productos', 'id')->whereNull('deleted_at')],
             'cantidad' => 'nullable|integer|min:1|max:99',
         ]);
 
@@ -78,6 +86,17 @@ class CarritoController extends Controller
         $cantidad = $datos['cantidad'] ?? 1;
 
         $item = $carrito->items()->where('producto_id', $producto->id)->first();
+        $solicitado = $cantidad + ($item->cantidad ?? 0);
+
+        // Avisar aquí y no en la caja (H-35). El descuento real se comprueba
+        // otra vez al pagar, con la fila bloqueada: esto es cortesía, no
+        // garantía — entre añadir y pagar, otro puede haberse llevado la última.
+        if (! $producto->hayStock($solicitado)) {
+            return redirect()->back()->with(
+                'error',
+                "Solo quedan {$producto->stock} unidades de «{$producto->nombre}»."
+            );
+        }
 
         if ($item) {
             $item->increment('cantidad', $cantidad);
@@ -121,11 +140,32 @@ class CarritoController extends Controller
             return redirect()->route('carrito.index')->with('error', 'El carrito está vacío.');
         }
 
+        // Un carrito puede quedarse días abierto mientras el stock se agota.
+        // Mejor decirlo antes de la pantalla de pago que después de cobrar.
+        $sinStock = $items->filter(fn ($item) => ! $item->producto->hayStock($item->cantidad));
+
+        if ($sinStock->isNotEmpty()) {
+            return redirect()->route('carrito.index')->with(
+                'error',
+                'Sin stock suficiente: '.$sinStock->map(
+                    fn ($i) => "{$i->producto->nombre} (quedan {$i->producto->stock})"
+                )->implode(', ').'.'
+            );
+        }
+
         $total = $this->calcularTotal($items);
 
         return view('pago.confirmar', compact('items', 'total'));
     }
 
+    /**
+     * Cobra el carrito y saca la mercancía del inventario.
+     *
+     * Hasta la Fase 3 esto creaba la venta y no tocaba el stock: se podía
+     * vender indefinidamente un producto del que no quedaba ni una unidad
+     * (H-35). Ahora cada línea genera su movimiento de salida, y si falta
+     * stock de una sola, la transacción deshace la venta entera.
+     */
     public function procesarPago()
     {
         $carrito = $this->obtenerCarrito();
@@ -135,26 +175,41 @@ class CarritoController extends Controller
             return redirect()->route('carrito.index')->with('error', 'El carrito está vacío.');
         }
 
-        $venta = DB::transaction(function () use ($carrito, $items) {
+        try {
+            $venta = DB::transaction(function () use ($carrito, $items) {
 
-            $venta = Venta::create([
-                // Nullable: la tienda permite comprar como invitado (H-10)
-                'user_id' => Auth::id(),
-                'total' => $this->calcularTotal($items),
-            ]);
-
-            foreach ($items as $item) {
-                $venta->items()->create([
-                    'producto_id' => $item->producto_id,
-                    'cantidad' => $item->cantidad,
-                    'precio' => $item->producto->precio,
+                $venta = Venta::create([
+                    // Nullable: la tienda permite comprar como invitado (H-10)
+                    'user_id' => Auth::id(),
+                    'total' => $this->calcularTotal($items),
                 ]);
-            }
 
-            $carrito->items()->delete();
+                foreach ($items as $item) {
+                    $venta->items()->create([
+                        'producto_id' => $item->producto_id,
+                        'cantidad' => $item->cantidad,
+                        'precio' => $item->producto->precio,
+                    ]);
 
-            return $venta;
-        });
+                    // El servicio bloquea la fila y comprueba el stock dentro
+                    // de esta misma transacción: entre la comprobación y el
+                    // descuento no cabe otra venta.
+                    $this->inventario->salida(
+                        $item->producto,
+                        $item->cantidad,
+                        "Venta #{$venta->id}",
+                        $venta,
+                        Auth::user()
+                    );
+                }
+
+                $carrito->items()->delete();
+
+                return $venta;
+            });
+        } catch (StockInsuficienteException $e) {
+            return redirect()->route('carrito.index')->with('error', $e->getMessage());
+        }
 
         return redirect()->route('pago.exito')->with('venta_id', $venta->id);
     }

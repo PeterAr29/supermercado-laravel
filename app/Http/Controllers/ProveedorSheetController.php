@@ -12,7 +12,7 @@ class ProveedorSheetController extends Controller
     {
         $response = Http::get($this->sheetUrl);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             abort(500, 'No se pudo leer Google Sheets');
         }
 

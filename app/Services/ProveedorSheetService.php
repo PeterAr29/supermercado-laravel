@@ -11,7 +11,9 @@ class ProveedorSheetService
     public function obtenerPorProducto($productoId)
     {
         $response = Http::get($this->url);
-        if (!$response->successful()) return [];
+        if (! $response->successful()) {
+            return [];
+        }
 
         $rows = array_map('str_getcsv', explode("\n", $response->body()));
         $headers = array_shift($rows);
@@ -19,7 +21,9 @@ class ProveedorSheetService
         $relaciones = [];
 
         foreach ($rows as $row) {
-            if (count($row) !== count($headers)) continue;
+            if (count($row) !== count($headers)) {
+                continue;
+            }
 
             $data = array_combine($headers, $row);
 

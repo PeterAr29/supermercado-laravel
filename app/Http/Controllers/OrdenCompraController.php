@@ -6,12 +6,15 @@ use App\Enums\EstadoOrdenCompra;
 use App\Models\OrdenCompra;
 use App\Models\OrdenCompraItem;
 use App\Models\Proveedor;
+use App\Services\InventarioService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class OrdenCompraController extends Controller
 {
+    public function __construct(private readonly InventarioService $inventario) {}
+
     // Listado de órdenes
     public function index()
     {
@@ -109,7 +112,13 @@ class OrdenCompraController extends Controller
         return view('ordenes.show', compact('orden'));
     }
 
-    // Marcar como recibida + actualizar stock
+    /**
+     * Marcar como recibida: la mercancía entra al inventario.
+     *
+     * El increment() directo sobre el producto desaparece: ahora la reposición
+     * pasa por InventarioService y deja su movimiento de entrada, para que el
+     * kardex explique de dónde salió cada unidad (H-35).
+     */
     public function recibir(OrdenCompra $orden)
     {
         if ($orden->estaRecibida()) {
@@ -118,7 +127,13 @@ class OrdenCompraController extends Controller
 
         DB::transaction(function () use ($orden) {
             foreach ($orden->items as $item) {
-                $item->producto->increment('stock', $item->cantidad);
+                $this->inventario->entrada(
+                    $item->producto,
+                    $item->cantidad,
+                    "Recepción de la orden de compra #{$orden->id} ({$orden->proveedor->nombre})",
+                    $orden,
+                    request()->user()
+                );
             }
 
             $orden->update(['estado' => EstadoOrdenCompra::Recibido]);

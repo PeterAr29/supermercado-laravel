@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('orden_id')->constrained('ordenes_compra')->onDelete('cascade');
             $table->foreignId('producto_id')->constrained('productos');
             $table->integer('cantidad');
-            $table->decimal('precio', 10, 2); 
+            $table->decimal('precio', 10, 2);
             $table->decimal('subtotal', 10, 2);
         });
     }

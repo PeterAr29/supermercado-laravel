@@ -10,6 +10,7 @@ class ProveedorController extends Controller
     public function index()
     {
         $proveedores = Proveedor::all();
+
         return view('proveedores.index', compact('proveedores'));
     }
 
@@ -33,7 +34,7 @@ class ProveedorController extends Controller
         Proveedor::create($datos);
 
         return redirect()->route('proveedores.index')
-                         ->with('success', 'Proveedor creado correctamente.');
+            ->with('success', 'Proveedor creado correctamente.');
     }
 
     public function edit(Proveedor $proveedor)
@@ -56,7 +57,7 @@ class ProveedorController extends Controller
         $proveedor->update($datos);
 
         return redirect()->route('proveedores.index')
-                         ->with('success', 'Proveedor actualizado.');
+            ->with('success', 'Proveedor actualizado.');
     }
 
     public function destroy(Proveedor $proveedor)
@@ -64,6 +65,6 @@ class ProveedorController extends Controller
         $proveedor->delete();
 
         return redirect()->route('proveedores.index')
-                         ->with('success', 'Proveedor eliminado.');
+            ->with('success', 'Proveedor eliminado.');
     }
 }

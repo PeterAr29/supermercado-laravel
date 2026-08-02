@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Proveedor;
 use App\Models\Producto;
+use App\Models\Proveedor;
 use Illuminate\Http\Request;
 
 class ProveedorProductoController extends Controller
@@ -12,6 +12,7 @@ class ProveedorProductoController extends Controller
     public function index(Proveedor $proveedor)
     {
         $productos = $proveedor->productos()->paginate(10);
+
         return view('proveedores.productos.index', compact('proveedor', 'productos'));
     }
 
@@ -31,11 +32,11 @@ class ProveedorProductoController extends Controller
     {
         $request->validate([
             'producto_id' => 'required',
-            'precio_compra' => 'required|numeric'
+            'precio_compra' => 'required|numeric',
         ]);
 
         $proveedor->productos()->attach($request->producto_id, [
-            'precio_compra' => $request->precio_compra
+            'precio_compra' => $request->precio_compra,
         ]);
 
         return redirect()
@@ -54,11 +55,11 @@ class ProveedorProductoController extends Controller
     public function update(Request $request, Proveedor $proveedor, $producto_id)
     {
         $request->validate([
-            'precio_compra' => 'required|numeric'
+            'precio_compra' => 'required|numeric',
         ]);
 
         $proveedor->productos()->updateExistingPivot($producto_id, [
-            'precio_compra' => $request->precio_compra
+            'precio_compra' => $request->precio_compra,
         ]);
 
         return redirect()->route('proveedor.productos.index', $proveedor)
