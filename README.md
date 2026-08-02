@@ -5,7 +5,7 @@ Tienda de supermercado con panel de gestión, sobre Laravel 10. Tiene **dos cara
 | | |
 |---|---|
 | **Stack** | PHP 8.1 · Laravel 10 · MySQL · Tailwind + Vite · Breeze |
-| **Estado** | Fases 0-6 del roadmap cerradas · 49 tests en verde |
+| **Estado** | Fases 0-7 del roadmap cerradas · 63 tests en verde · sin hallazgos abiertos |
 | **Gestión** | [`docs/`](docs/) — contexto, hallazgos, roadmap y convenciones |
 
 ## Dónde está el proyecto
@@ -81,7 +81,7 @@ Paso 0 obligatorio antes de empezar cualquier fase: Git versiona el código, no 
 ## Calidad
 
 ```bash
-php artisan test        # 49 tests, 128 aserciones
+php artisan test        # 63 tests, 164 aserciones
 ./vendor/bin/pint       # NO es `php artisan pint`: Pint es un binario
 ```
 
@@ -89,12 +89,14 @@ Los tests de dominio viven en `tests/Feature/Tienda` (catálogo, carrito, checko
 
 **Un test afirma algo del resultado, no que la petición no reventó.** Una pantalla en blanco y una con la codificación destrozada responden `200` igual: pasó dos veces (H-45, H-47). Si la prueba mira una pantalla, mira **lo que tiene que aparecer en el HTML**.
 
+**Y aun así no basta: si tocas vistas, abre la aplicación y míralas.** Un test comprueba el HTML *que se le dice que comprueba*. Con la suite entera en verde, el paginador seguía hablando inglés y un campo de la ficha pedía datos que nadie recogía (H-48…H-51). Eso solo se ve mirando.
+
 ## Documentación
 
 | Documento | Para qué |
 |---|---|
 | [`docs/01-CONTEXTO.md`](docs/01-CONTEXTO.md) | Qué es el proyecto y cómo llegó a ser lo que es |
-| [`docs/02-HALLAZGOS.md`](docs/02-HALLAZGOS.md) | Los 47 hallazgos auditados, con diagnóstico y arreglo |
+| [`docs/02-HALLAZGOS.md`](docs/02-HALLAZGOS.md) | Los 51 hallazgos registrados, con diagnóstico y arreglo |
 | [`docs/03-ROADMAP.md`](docs/03-ROADMAP.md) | Las fases, su criterio de aceptación y el backlog |
 | [`docs/04-CONVENCIONES.md`](docs/04-CONVENCIONES.md) | Reglas para que no se vuelva a desordenar |
 | [`CHANGELOG.md`](CHANGELOG.md) | Qué cambió en cada fase |

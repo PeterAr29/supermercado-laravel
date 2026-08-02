@@ -53,10 +53,10 @@ Auditoría del 2026-08-01 sobre `routes/`, 8 controladores de dominio, 10 modelo
 | H-45 | 🟠 | Regresión | El refactor de la Fase 3 rompió la codificación de 4 vistas | 4 ✅ |
 | H-46 | 🟡 | Bug | El RUC del proveedor no era único ni tenía longitud | 4 ✅ |
 | H-47 | 🔴 | Bug | El perfil y el dashboard se pintaban vacíos | 5 ✅ |
-| H-48 | 🟡 | Vistas | `/dashboard` sigue siendo el marcador de posición de Breeze | 7 |
-| H-49 | 🟢 | Vistas | La paginación se imprime en inglés | 7 |
-| H-50 | 🟡 | Vistas | Un campo de la ficha de producto está fuera del formulario | 7 |
-| H-51 | 🟢 | Vistas | El kardex atribuye el saldo inicial a «Invitado» | 7 |
+| H-48 | 🟡 | Vistas | `/dashboard` sigue siendo el marcador de posición de Breeze | 7 ✅ |
+| H-49 | 🟢 | Vistas | La paginación se imprime en inglés | 7 ✅ |
+| H-50 | 🟡 | Vistas | Un campo de la ficha de producto está fuera del formulario | 7 ✅ |
+| H-51 | 🟢 | Vistas | El kardex atribuye el saldo inicial a «Invitado» | 7 ✅ |
 
 > **H-48…H-51 salen de la revisión en navegador del 2026-08-02**, después de cerrar la Fase 6: se arrancó la app y se recorrieron 21 pantallas con un navegador de verdad. Ninguno lo habrían encontrado los tests, porque los cuatro son cosas que **se ven**, no que fallen: las cuatro pantallas responden `200` y hacen lo que el código dice que hacen.
 
@@ -587,7 +587,7 @@ Un cliente del supermercado no debería poder tocar nada de eso.
 - `add_categoria_id_to_productos_table.php` tiene el `down()` vacío → migración no reversible
 
 ### H-48 — `/dashboard` sigue siendo el marcador de posición de Breeze
-**Abierto.** *(Asignado a la Fase 7.)* · Detectado en la revisión en navegador del 2026-08-02.
+**Resuelto en la Fase 7.** · Detectado en la revisión en navegador del 2026-08-02.
 
 **Dónde:** `resources/views/dashboard.blade.php` · `routes/web.php:103`
 
@@ -602,10 +602,14 @@ Un título en inglés y una frase que le dice al usuario algo que ya sabe. La ru
 
 **Ojo con darlo por cerrado leyendo el CHANGELOG.** H-47 arregló que esta pantalla **pintara algo** —antes salía en blanco porque `AppLayout` apuntaba a un layout que nunca imprimía `$slot`—. Que pinte no significa que diga nada: el arreglo de la Fase 5 fue de fontanería, y el contenido nunca se escribió.
 
-**Arreglo (Fase 7):** decidir a dónde va cada rol tras iniciar sesión. El administrador tiene `/admin`; el cliente tiene `/mi-cuenta` y `/mis-pedidos`. Una pantalla intermedia en inglés que no lleva a ninguno de los dos sitios no es de nadie.
+**Arreglo (Fase 7):** decidido por el responsable — **el administrador a `/admin`, el cliente a la tienda**. La ruta `/dashboard` y su vista se retiran.
+
+Dónde vive la decisión: `User::rutaDeInicio()`. Los seis controladores de Breeze y el middleware `RedirectIfAuthenticated` usaban la constante `RouteServiceProvider::HOME`, que valía `/dashboard` **para todos**; ahora preguntan al usuario. La constante se queda valiendo `/` como destino de reserva para cuando no hay nadie a quien preguntar.
+
+**Efecto lateral que conviene tener escrito:** `/dashboard` era la única ruta con el middleware `verified`. Retirarla lo deja sin uso —el alias sigue registrado en `Kernel.php`—, pero **no cambia nada en la práctica**: `User` no implementa `MustVerifyEmail`, así que `EnsureEmailIsVerified` ya dejaba pasar a todo el mundo. La verificación de correo lleva inactiva desde el principio. Si algún día se quiere de verdad, hay que implementar la interfaz **y** decidir qué rutas protege.
 
 ### H-50 — Un campo de la ficha de producto está fuera del formulario
-**Abierto.** *(Asignado a la Fase 7.)* · Detectado en la revisión en navegador del 2026-08-02.
+**Resuelto en la Fase 7.** · Detectado en la revisión en navegador del 2026-08-02.
 
 **Dónde:** `resources/views/productos/show.blade.php:40-49` (el campo) y `:69` (el `<form>`)
 
@@ -615,7 +619,11 @@ El textarea cierra en la línea 49. El `<form>` que envía al carrito abre en la
 
 Es el mismo patrón que H-05 (el contacto del proveedor que se descartaba en silencio) y H-42 (el stock que el formulario nunca enviaba): **la pantalla promete un dato que la aplicación no recoge**, y no falla nada, que es lo que lo hace difícil de ver.
 
-**Arreglo (Fase 7):** o el campo entra en el formulario y su nota se guarda en la línea de carrito y viaja a la de venta, o se quita de la ficha. Lo que no puede quedarse es pidiendo algo que nadie va a leer. **Es una decisión de producto, no de código**: guardarlo obliga a una columna nueva y a enseñarlo en el pedido.
+**Arreglo (Fase 7):** decidido por el responsable — **se retira de la ficha**.
+
+Por el mismo argumento con el que la dirección del cliente salió del roadmap: *«sin entrega ni pago real, una dirección es un campo que nadie lee»*. Aquí igual — sin nadie que prepare el pedido, la indicación no la lee ningún humano. Vuelve cuando exista preparación de pedidos, y entonces entra completa: columna en la línea de carrito, copia a la de venta y visible en el pedido y en el panel.
+
+Queda un comentario en la vista explicando qué había ahí y por qué se fue, para que a nadie le parezca buena idea volver a añadirlo suelto.
 
 ---
 
@@ -693,7 +701,7 @@ Solo están los de Breeze (auth y perfil). Cero cobertura de carrito, checkout, 
 **Verificado tras el traslado:** `git log` y `git status` intactos con `main` sincronizado · `php artisan test` 49 pasan · `npm run build` reconstruye los assets · y las pantallas se sirven de verdad —`/`, `/productos` y `/carrito` devuelven HTML con productos reales y el enlace a la página 2—, no solo un `200`.
 
 ### H-49 — La paginación se imprime en inglés
-**Abierto.** *(Asignado a la Fase 7.)* · Detectado en la revisión en navegador del 2026-08-02.
+**Resuelto en la Fase 7.** · Detectado en la revisión en navegador del 2026-08-02.
 
 **Dónde:** no hay carpeta `lang/` en el proyecto
 
@@ -707,10 +715,18 @@ Sin `lang/es`, el paginador imprime las cadenas por defecto de Laravel. Aparece 
 
 Es pequeño, pero es exactamente lo que la Fase 5 fue a corregir con H-18: **una sola voz**. Convivían cuatro marcas distintas; ahora conviven dos idiomas en la misma pantalla.
 
-**Arreglo (Fase 7):** publicar las traducciones (`php artisan lang:publish`) y traducir `pagination.php`, o pasar `APP_LOCALE=es`. Aparecido al paginar el catálogo, que es de la Fase 6: **la paginación se añadió sin mirar cómo se leía**.
+**Arreglo (Fase 7):** `APP_LOCALE=es` y `lang/es`. Resultó ser más de lo que decía este hallazgo, y lo descubrió el test, no la lectura del código:
+
+1. **La paginación tiene sus cadenas en dos sitios.** `previous`/`next` salen de `pagination.php`, pero **«Showing / to / of / results» son claves JSON** de la propia vista del paginador. Traducido solo `pagination.php`, el texto seguía en inglés — `assertDontSee('Showing')` falló y ahí apareció la otra mitad.
+2. **Las pantallas de Breeze son otras 36 cadenas**: entrar, registro, perfil, recuperar contraseña y verificación. Todas visibles, todas en inglés. Van en `lang/es.json`.
+3. **Los mensajes de validación tienen que llevar el artículo.** `:attribute` se sustituye tal cual, sin artículo y en minúscula: con `':attribute es obligatorio.'` el mensaje salía **«producto es obligatorio.»**. Todos empiezan por «El campo :attribute».
+
+`lang/en` no se conserva: el inglés lo cubre el *fallback* del framework, en `vendor`.
+
+**De dónde venía:** la paginación se añadió en la Fase 6 sin mirar cómo se leía. Los mensajes de validación llevaban en inglés desde el primer día.
 
 ### H-51 — El kardex atribuye el saldo inicial a «Invitado»
-**Abierto.** *(Asignado a la Fase 7.)* · Detectado en la revisión en navegador del 2026-08-02.
+**Resuelto en la Fase 7.** · Detectado en la revisión en navegador del 2026-08-02.
 
 **Dónde:** `resources/views/admin/inventario/kardex.blade.php:119`
 
@@ -722,4 +738,12 @@ Los movimientos de apertura los escribe `InventarioInicialSeeder`, que corre por
 
 No es un fallo de datos —el `null` es correcto: nadie los hizo a mano—, sino de cómo se cuenta. Un kardex existe para responder *quién movió esto*, y ahí «Invitado» es la peor respuesta posible: parece un dato, y es la ausencia de uno.
 
-**Arreglo (Fase 7):** distinguir los dos casos. Sin usuario y con origen (venta u orden), lo movió el documento; sin usuario y sin origen, lo movió el **sistema**. «Invitado» solo tiene sentido en la tienda, hablando de un comprador sin cuenta.
+**Arreglo (Fase 7):** `MovimientoInventario::autor()` separa los dos casos, y la vista solo lo imprime — decidir no es cosa de Blade.
+
+| Situación | Firma | Por qué |
+|---|---|---|
+| Con `user_id` | su nombre | lo hizo esa persona |
+| Sin usuario, **con** venta detrás | «Invitado» | sí hubo alguien: un comprador sin cuenta, que la tienda permite (H-10) |
+| Sin usuario y sin documento | «Sistema» | lo escribió un seeder por consola; no lo hizo nadie a mano |
+
+Es decir, «Invitado» no era un error siempre: era correcto para la compra de un invitado y falso para el asiento de apertura. El fallo estaba en no distinguirlos.
