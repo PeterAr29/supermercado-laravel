@@ -72,6 +72,25 @@ Tipos: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`.
 - Un commit = un cambio coherente. No mezclar el arreglo de H-01 con el de H-16.
 - Cada fase cerrada genera una entrada en `CHANGELOG.md`.
 
+### Remoto
+
+`origin` → https://github.com/PeterAr29/supermercado-laravel (**privado**)
+
+Ciclo de una fase:
+
+```bash
+git switch -c fase-1-seguridad     # 1. rama de la fase
+# ...trabajar, commit por cada hallazgo cerrado...
+git push -u origin fase-1-seguridad # 2. subir la rama
+gh pr create --fill                 # 3. Pull Request (deja constancia del alcance)
+gh pr merge --squash --delete-branch # 4. fusionar al cerrar la fase
+git switch main && git pull          # 5. actualizar local
+```
+
+**Nunca se commitea directamente en `main`** salvo correcciones de documentación.
+
+**Nunca se sube el `.env`.** Si se añade una variable nueva, se documenta en `.env.example` (ese sí se versiona) sin su valor real.
+
 ## 7. Antes de dar una fase por terminada
 
 1. Se cumple el **criterio de aceptación** escrito en `03-ROADMAP.md` — verificado, no supuesto.
