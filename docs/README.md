@@ -10,6 +10,7 @@ Documentación de gestión, no de código. Aquí se decide **qué se hace, en qu
 | [02-HALLAZGOS.md](02-HALLAZGOS.md) | Inventario de deuda técnica con ID y severidad (`H-01`…`H-51`) | Antes de planificar |
 | [03-ROADMAP.md](03-ROADMAP.md) | Fases de trabajo, alcance y criterio de aceptación de cada una | Antes de programar |
 | [04-CONVENCIONES.md](04-CONVENCIONES.md) | Reglas para que el proyecto no se vuelva a desordenar | Durante cada cambio |
+| [05-DESPLIEGUE.md](05-DESPLIEGUE.md) | Cómo se publica: imagen Docker, variables y pasos en Railway | Al desplegar |
 
 ## Dónde vive cada cosa
 

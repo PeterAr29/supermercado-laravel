@@ -1,0 +1,65 @@
+# Plantilla: ${PORT} lo sustituye entrypoint.sh en el arranque.
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+error_log /dev/stderr warn;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    access_log /dev/stdout;
+    sendfile on;
+    tcp_nopush on;
+    keepalive_timeout 65;
+    server_tokens off;
+    client_max_body_size 16M;
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+
+    server {
+        # Railway inyecta $PORT y espera que el contenedor escuche justo ahí.
+        listen ${PORT};
+        server_name _;
+
+        # La raíz es public/, nunca la del proyecto: fuera de ahí están .env,
+        # vendor y storage, que no deben servirse jamás.
+        root /var/www/html/public;
+        index index.php;
+
+        charset utf-8;
+
+        location / {
+            try_files $uri $uri/ /index.php?$query_string;
+        }
+
+        # El bundle de Vite lleva hash en el nombre, así que puede cachearse
+        # para siempre: si cambia, cambia el nombre.
+        location /build/ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+            try_files $uri =404;
+        }
+
+        location = /favicon.ico { access_log off; log_not_found off; }
+        location = /robots.txt  { access_log off; log_not_found off; }
+
+        location ~ \.php$ {
+            fastcgi_pass 127.0.0.1:9000;
+            fastcgi_index index.php;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            include fastcgi_params;
+            fastcgi_read_timeout 60;
+        }
+
+        # Nada de ficheros ocultos: .env, .git y compañía.
+        location ~ /\.(?!well-known).* {
+            deny all;
+        }
+    }
+}

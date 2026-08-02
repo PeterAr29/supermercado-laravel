@@ -1,0 +1,55 @@
+# Lo primero y más importante: el .env local NO entra en la imagen.
+# `COPY . .` lo copiaría, y entonces el contenedor arrancaría con las
+# credenciales de desarrollo y con APP_DEBUG=true, ignorando las variables
+# de entorno del servicio. Es la forma más silenciosa de publicar una
+# aplicación con la base de datos de tu portátil escrita dentro.
+.env
+.env.*
+!.env.example
+
+# Se instalan dentro, en sus etapas: copiar los de aquí trae binarios
+# compilados para Windows.
+/vendor
+/node_modules
+
+# Se compila dentro. Si se copiara, un build viejo pisaría al nuevo.
+/public/build
+/public/hot
+/public/storage
+
+# El manifiesto de paquetes descubierto EN LOCAL, donde sí están las
+# dependencias de desarrollo. Si viaja a la imagen, Laravel intenta registrar
+# CollisionServiceProvider —que con --no-dev no existe— y no arranca: cae en
+# el primer `artisan` del entrypoint, antes de servir una sola petición.
+# Se regenera solo dentro.
+/bootstrap/cache/*.php
+
+# Datos y ruido local
+backup_*.sql
+/storage/logs/*.log
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+.phpunit.result.cache
+/.phpunit.cache
+
+# Los .gitkeep vuelven a entrar: si un directorio de storage se queda sin
+# ningún fichero incluido, Docker no lo crea, y `view:cache` se cae en el
+# arranque buscando un sitio donde escribir.
+!**/.gitkeep
+
+# Historial y herramientas: no aportan nada en tiempo de ejecución y
+# engordan el contexto de build.
+.git
+.gitignore
+.gitattributes
+.github
+/.idea
+/.vscode
+/.fleet
+/tests
+/docs
+CHANGELOG.md
+README.md
+Dockerfile
+.dockerignore
