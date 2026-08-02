@@ -55,6 +55,26 @@ class MovimientoInventario extends Model
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * Quién firma el movimiento, para la columna «Quién» del kardex (H-51).
+     *
+     * Sin `user_id` hay **dos** casos distintos, y tratarlos igual hacía que
+     * los asientos de apertura —que escribe un seeder por consola— salieran
+     * firmados por «Invitado», que en un libro de inventario se lee como una
+     * persona que entró en la tienda y movió stock.
+     *
+     * Con una venta detrás sí hubo alguien: un comprador sin cuenta, que la
+     * tienda permite (H-10). Sin documento ninguno no lo hizo nadie a mano.
+     */
+    public function autor(): string
+    {
+        if ($this->user) {
+            return $this->user->name;
+        }
+
+        return $this->origen instanceof Venta ? 'Invitado' : 'Sistema';
+    }
+
     public function esEntrada(): bool
     {
         return $this->tipo === TipoMovimiento::Entrada;

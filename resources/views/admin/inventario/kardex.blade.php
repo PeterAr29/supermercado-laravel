@@ -116,7 +116,7 @@
                                     <td class="px-4 py-3 text-gray-700">{{ $movimiento->motivo }}</td>
 
                                     <td class="px-4 py-3 text-gray-500">
-                                        {{ $movimiento->user->name ?? 'Invitado' }}
+                                        {{ $movimiento->autor() }}
                                     </td>
 
                                     <td class="px-4 py-3 text-right font-bold whitespace-nowrap {{ $movimiento->cantidad > 0 ? 'text-green-600' : 'text-red-600' }}">
