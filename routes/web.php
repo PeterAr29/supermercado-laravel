@@ -100,7 +100,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/mis-pedidos', [VentaController::class, 'index'])->name('mis-pedidos.index');
     Route::get('/mis-pedidos/{venta}', [VentaController::class, 'show'])->name('mis-pedidos.show');
 
-    Route::get('/dashboard', fn () => view('dashboard'))->middleware('verified')->name('dashboard');
+    // Aquí vivía '/dashboard', el marcador de posición de Breeze —«Dashboard»
+    // y «You're logged in!»— donde aterrizaban los dos roles al iniciar
+    // sesión. Ahora cada uno va a donde trabaja: `User::rutaDeInicio()` manda
+    // al administrador a /admin y al cliente a la tienda (H-48).
 
     // Perfil — el controlador y las vistas existían, pero las rutas nunca
     // llegaron a registrarse: /profile devolvía 404 (H-31).
