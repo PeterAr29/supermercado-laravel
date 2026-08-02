@@ -205,9 +205,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## Fases pendientes
 
-| Fase | Nombre | Estado |
-|---|---|---|
-| 7 | Lo que solo se ve en pantalla (`H-48`…`H-51`) | ⬜ Pendiente |
+| Fase | Nombre | Issue | Estado |
+|---|---|---|---|
+| 7 | Lo que solo se ve en pantalla (`H-48`…`H-51`) | [#18](https://github.com/PeterAr29/supermercado-laravel/issues/18) | ⬜ Pendiente |
 
 Las fases 0 a 6 están cerradas, y H-27 también. La **Fase 7** apareció el 2026-08-02
 al arrancar la aplicación y recorrerla en un navegador con el roadmap ya dado por

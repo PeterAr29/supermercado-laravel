@@ -34,7 +34,7 @@ Para evitar dos listas que se contradigan, el reparto es estricto:
 ## Estado actual
 
 - **Última fase cerrada:** 6 — Robustez y calidad ✅ ([#6](https://github.com/PeterAr29/supermercado-laravel/issues/6))
-- **Siguiente:** 7 — Lo que solo se ve en pantalla (`H-48`…`H-51`). **Sin issue todavía.**
+- **Siguiente:** 7 — Lo que solo se ve en pantalla ([#18](https://github.com/PeterAr29/supermercado-laravel/issues/18)), con `H-48`…`H-51`.
 - Las fases 0 a 6 están cerradas, y H-27 —la carpeta anidada— también: la raíz del proyecto es ya la raíz del repositorio ([#7](https://github.com/PeterAr29/supermercado-laravel/issues/7)).
 - **La Fase 7 salió de arrancar la aplicación y mirarla**, el 2026-08-02, con el roadmap ya dado por terminado. Cuatro defectos que ninguna de las seis fases vio, porque las cuatro pantallas responden `200` y hacen lo que su código dice.
 - Después de la Fase 7, lo que venga sale del **backlog** de `03-ROADMAP.md`.

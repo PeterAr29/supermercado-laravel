@@ -16,7 +16,7 @@ Cada fase tiene **objetivo**, **alcance cerrado**, **checklist** y **criterio de
 | 4 | Separación de capas (MVC real) | [#4](https://github.com/PeterAr29/supermercado-laravel/issues/4) ✅ | H-12, H-13, H-19, H-20, H-45, H-46 |
 | 5 | Capa de presentación | [#5](https://github.com/PeterAr29/supermercado-laravel/issues/5) ✅ | H-15…H-18, H-43, H-47 |
 | 6 | Robustez y calidad | [#6](https://github.com/PeterAr29/supermercado-laravel/issues/6) ✅ | H-22, H-23, H-24, H-34 |
-| 7 | Lo que solo se ve en pantalla | *(sin issue todavía)* | H-48…H-51 |
+| 7 | Lo que solo se ve en pantalla | [#18](https://github.com/PeterAr29/supermercado-laravel/issues/18) | H-48…H-51 |
 | — | Decisión sobre carpeta anidada | [#7](https://github.com/PeterAr29/supermercado-laravel/issues/7) ✅ | H-27 |
 
 ### Cambio de plan — 2026-08-01
