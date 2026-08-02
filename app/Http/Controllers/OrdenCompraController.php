@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Proveedor;
-use App\Models\Producto;
 use App\Models\OrdenCompra;
 use App\Models\OrdenCompraItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class OrdenCompraController extends Controller
 {
@@ -36,50 +36,63 @@ class OrdenCompraController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'proveedor_id' => 'required',
-            'productos' => 'required|array',
-            'cantidades' => 'required|array',
+            'proveedor_id' => 'required|exists:proveedores,id',
+            'productos'    => 'required|array',
+            'cantidades'   => 'required|array',
         ]);
 
-        DB::beginTransaction();
+        $proveedor = Proveedor::findOrFail($request->proveedor_id);
 
-        $orden = OrdenCompra::create([
-            'proveedor_id' => $request->proveedor_id,
-            'estado' => 'pendiente',
-            'total' => 0
-        ]);
+        DB::transaction(function () use ($request, $proveedor) {
 
-        $total = 0;
-
-        foreach ($request->productos as $index => $producto_id) {
-
-            // Buscar el producto con su información del pivot proveedor-producto
-            $producto = Producto::findOrFail($producto_id);
-            $proveedor = Proveedor::find($request->proveedor_id);
-
-            // Obtener el precio del producto del pivot proveedor-producto
-            $precio = $proveedor->productos()
-                        ->where('producto_id', $producto_id)
-                        ->first()
-                        ->pivot->precio;
-
-            $cantidad = $request->cantidades[$index];
-            $subtotal = $precio * $cantidad;
-            $total += $subtotal;
-
-            // Crear item correcto usando tus columnas reales
-            OrdenCompraItem::create([
-                'orden_id' => $orden->id,   // <- corregido
-                'producto_id' => $producto_id,
-                'cantidad' => $cantidad,
-                'precio' => $precio,       // <- corregido
-                'subtotal' => $subtotal
+            $orden = OrdenCompra::create([
+                'proveedor_id' => $proveedor->id,
+                'estado'       => 'pendiente',
+                'total'        => 0,
             ]);
-        }
 
-        $orden->update(['total' => $total]);
+            $total = 0;
 
-        DB::commit();
+            foreach ($request->productos as $index => $producto_id) {
+
+                // El formulario envía todos los productos del proveedor,
+                // con cantidad 0 los que no se piden.
+                $cantidad = (int) ($request->cantidades[$index] ?? 0);
+
+                if ($cantidad <= 0) {
+                    continue;
+                }
+
+                // El precio de compra vive en el pivot proveedor-producto
+                $asignado = $proveedor->productos()->where('producto_id', $producto_id)->first();
+
+                if (! $asignado) {
+                    throw ValidationException::withMessages([
+                        'productos' => 'Hay productos que no están asignados a este proveedor.',
+                    ]);
+                }
+
+                $precio   = $asignado->pivot->precio_compra;
+                $subtotal = $precio * $cantidad;
+                $total   += $subtotal;
+
+                OrdenCompraItem::create([
+                    'orden_id'    => $orden->id,
+                    'producto_id' => $producto_id,
+                    'cantidad'    => $cantidad,
+                    'precio'      => $precio,
+                    'subtotal'    => $subtotal,
+                ]);
+            }
+
+            if ($total <= 0) {
+                throw ValidationException::withMessages([
+                    'cantidades' => 'Indica una cantidad mayor que cero en al menos un producto.',
+                ]);
+            }
+
+            $orden->update(['total' => $total]);
+        });
 
         return redirect()->route('ordenes.index')->with('success', 'Orden creada correctamente.');
     }
@@ -94,18 +107,17 @@ class OrdenCompraController extends Controller
     // Marcar como recibida + actualizar stock
     public function recibir(OrdenCompra $orden)
     {
-        if ($orden->estado == 'recibido') {
+        if ($orden->estado === 'recibido') {
             return back()->with('error', 'La orden ya fue recibida.');
         }
 
-        foreach ($orden->items as $item) {
-            $producto = $item->producto;
-            $producto->stock += $item->cantidad;
-            $producto->save();
-        }
+        DB::transaction(function () use ($orden) {
+            foreach ($orden->items as $item) {
+                $item->producto->increment('stock', $item->cantidad);
+            }
 
-        $orden->estado = 'recibido';
-        $orden->save();
+            $orden->update(['estado' => 'recibido']);
+        });
 
         return back()->with('success', 'Orden marcada como recibida y stock actualizado.');
     }

@@ -10,7 +10,7 @@ Cada fase tiene **objetivo**, **alcance cerrado**, **checklist** y **criterio de
 | Fase | Nombre | Issue | Hallazgos que cierra |
 |---|---|---|---|
 | 0 | Control de versiones y gestión | [#1](https://github.com/PeterAr29/supermercado-laravel/issues/1) ✅ | H-26 |
-| 1 | Seguridad e integridad de datos | [#2](https://github.com/PeterAr29/supermercado-laravel/issues/2) | H-01…H-07 |
+| 1 | Seguridad e integridad de datos | [#2](https://github.com/PeterAr29/supermercado-laravel/issues/2) ✅ | H-01…H-07, H-28…H-33 |
 | 2 | Dominio unificado | [#3](https://github.com/PeterAr29/supermercado-laravel/issues/3) | H-08…H-11, H-25 |
 | 3 | Separación de capas (MVC real) | [#4](https://github.com/PeterAr29/supermercado-laravel/issues/4) | H-12, H-13, H-14, H-19, H-20 |
 | 4 | Capa de presentación | [#5](https://github.com/PeterAr29/supermercado-laravel/issues/5) | H-15…H-18 |
@@ -47,7 +47,7 @@ Cada fase tiene **objetivo**, **alcance cerrado**, **checklist** y **criterio de
 
 ---
 
-## Fase 1 — Seguridad e integridad de datos ⬜
+## Fase 1 — Seguridad e integridad de datos ✅
 
 **Objetivo:** que el proyecto deje de ser peligroso y que el flujo de abastecimiento funcione.
 
@@ -85,13 +85,39 @@ Cada fase tiene **objetivo**, **alcance cerrado**, **checklist** y **criterio de
 - [ ] `OrdenCompraController::store` → `DB::transaction(fn () => ...)`
 - [ ] `ProveedorController::show()` implementado, o `->except(['show'])` en la ruta
 
-### Criterio de aceptación
+### Criterio de aceptación — ✅ cumplido
 1. Como invitado, ninguna ruta de escritura responde 200.
 2. Se crea un proveedor con contacto y **el contacto aparece** en el listado.
 3. Se asigna un producto al proveedor con `precio_compra` y se guarda.
 4. Se crea una orden de compra con **total distinto de 0**.
 5. Se marca como recibida y **el stock del producto aumenta**.
 6. Se borra un producto y las ventas anteriores conservan sus líneas y totales.
+
+**Verificado el 2026-08-01 contra MySQL real: 22 comprobaciones, 0 fallos.**
+Los datos de prueba se crearon dentro de una transacción revertida, sin dejar rastro.
+`php artisan test`: **25 pasan, 0 fallan** (antes de la fase: 5 rojos por H-31).
+
+### Hallazgos nuevos descubiertos durante la fase
+
+Los seis bloqueaban criterios de aceptación, eran regresiones de esta misma fase o
+impedían trabajar con seguridad, así que se resolvieron aquí. Detalle en `02-HALLAZGOS.md`.
+
+| ID | Qué era | Impacto real |
+|---|---|---|
+| H-28 | Faltaba la relación `Producto::proveedores()` | Asignar productos a un proveedor lanzaba `BadMethodCallException` |
+| H-29 | `Proveedor` apuntaba a la tabla `proveedors` | **Todo el CRUD de proveedores nunca funcionó** |
+| H-30 | `OrdenCompraItem` escribía timestamps inexistentes | Crear órdenes de compra fallaba siempre |
+| H-31 | Rutas de perfil de Breeze sin registrar | `/profile` daba 404; 5 tests en rojo |
+| H-32 | Producto retirado rompía órdenes y falseaba el carrito | Regresión del propio H-02, detectada en la revisión del PR |
+| H-33 | `php artisan test` apuntaba a la base de desarrollo | **Destruyó los datos de desarrollo antes de detectarse.** Ver H-34 |
+
+**Lectura de fondo:** H-29 y H-30 demuestran que el módulo de proveedores y órdenes
+de compra **jamás llegó a ejecutarse**. Los desajustes de H-04 y H-05 no se habían
+detectado porque el flujo fallaba antes de llegar a ellos.
+
+**Deriva de esquema detectada:** la columna `stock` existía en la base de desarrollo,
+pero ninguna migración la creaba — se había añadido a mano. La migración de H-03 usa
+`hasColumn()` para funcionar en ambos casos y dejar esquema y migraciones alineados.
 
 ---
 

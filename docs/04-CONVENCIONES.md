@@ -17,6 +17,9 @@ Reglas para que el proyecto no vuelva al estado descrito en `02-HALLAZGOS.md`. E
 
 - **Modelos:** singular, `PascalCase` → `Producto`, `OrdenCompra`
 - **Tablas:** plural, `snake_case` → `productos`, `ordenes_compra`
+- **Todo modelo del dominio declara `$table` explícitamente.** Eloquent pluraliza en
+  inglés: `Proveedor` → `proveedors`, no `proveedores`. Dejarlo al automatismo costó
+  que el CRUD de proveedores nunca funcionara (H-29)
 - **Pivots:** singular alfabético → `proveedor_producto`
 - **Claves foráneas:** `<modelo_singular>_id` → `producto_id`, `proveedor_id`
 - **Rutas nombradas:** `recurso.accion` → `productos.index`, `ordenes.recibir`
@@ -45,6 +48,11 @@ Reglas para que el proyecto no vuelva al estado descrito en `02-HALLAZGOS.md`. E
 - Estados y unidades: **enum de PHP 8.1**, nunca strings sueltos con el catálogo en un comentario
 - Toda migración implementa `down()` de verdad (una migración sin `down()` no es reversible)
 - Los datos históricos no se borran: `SoftDeletes` en las entidades referenciadas por ventas
+- **Al activar `SoftDeletes` hay que revisar todas las relaciones que apuntan al modelo**, una por una:
+  - **Documento histórico** (línea de venta, línea de orden) → `->withTrashed()`: debe resolver siempre
+  - **Dato accesorio** (línea de carrito) → filtrar con `whereHas()`: debe desaparecer
+
+  Omitirlo no siempre revienta; a veces solo calcula mal en silencio (H-32)
 
 ## 5. Front-end
 
@@ -91,7 +99,17 @@ git switch main && git pull          # 5. actualizar local
 
 **Nunca se sube el `.env`.** Si se añade una variable nueva, se documenta en `.env.example` (ese sí se versiona) sin su valor real.
 
-## 7. Antes de dar una fase por terminada
+## 7. Antes de EMPEZAR una fase
+
+1. **Volcado de la base de desarrollo.** Git versiona el código, no los datos:
+   ```
+   C:/xampp/mysql/bin/mysqldump.exe -u root laravel > backup_pre_fase_N.sql
+   ```
+2. **Comprobar a qué base apunta la suite de tests** (`phpunit.xml`) antes de ejecutarla
+   por primera vez. `RefreshDatabase` hace `migrate:fresh`: si apunta a la base de
+   desarrollo, la borra entera sin avisar (H-33).
+
+## 8. Antes de dar una fase por terminada
 
 1. Se cumple el **criterio de aceptación** escrito en `03-ROADMAP.md` — verificado, no supuesto.
 2. `php artisan test` pasa.

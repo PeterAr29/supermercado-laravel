@@ -6,21 +6,25 @@ use Illuminate\Database\Eloquent\Model;
 
 class Proveedor extends Model
 {
+    // Sin esto Eloquent pluraliza 'Proveedor' como 'proveedors' (H-29)
+    protected $table = 'proveedores';
+
     protected $fillable = [
         'nombre',
         'ruc',
         'telefono',
         'email',
         'direccion',
-        'contacto',
+        'contacto_nombre',
+        'contacto_telefono',
         'categoria',
-        'activo'
+        'activo',
     ];
 
     public function productos()
     {
         return $this->belongsToMany(Producto::class, 'proveedor_producto')
-                    ->withPivot('stock_proveedor');
+            ->withPivot('stock_proveedor', 'precio_compra');
     }
 
     public function ordenes()

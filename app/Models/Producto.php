@@ -3,19 +3,33 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Producto extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'nombre',
         'precio',
+        'stock',
         'imagen',
         'descripcion',
-        'categoria_id' 
+        'categoria_id'
+    ];
+
+    protected $casts = [
+        'stock' => 'integer',
     ];
 
     public function categoria()
     {
         return $this->belongsTo(Categoria::class);
+    }
+
+    public function proveedores()
+    {
+        return $this->belongsToMany(Proveedor::class, 'proveedor_producto')
+                    ->withPivot('stock_proveedor', 'precio_compra');
     }
 }

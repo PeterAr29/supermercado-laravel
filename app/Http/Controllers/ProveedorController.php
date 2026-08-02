@@ -20,7 +20,7 @@ class ProveedorController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $datos = $request->validate([
             'nombre' => 'required',
             'ruc' => 'required|numeric',
             'telefono' => 'required',
@@ -30,7 +30,7 @@ class ProveedorController extends Controller
             'contacto_telefono' => 'required',
         ]);
 
-        Proveedor::create($request->all());
+        Proveedor::create($datos);
 
         return redirect()->route('proveedores.index')
                          ->with('success', 'Proveedor creado correctamente.');
@@ -43,7 +43,7 @@ class ProveedorController extends Controller
 
     public function update(Request $request, Proveedor $proveedor)
     {
-        $request->validate([
+        $datos = $request->validate([
             'nombre' => 'required',
             'ruc' => 'required|numeric',
             'telefono' => 'required',
@@ -53,7 +53,7 @@ class ProveedorController extends Controller
             'contacto_telefono' => 'required',
         ]);
 
-        $proveedor->update($request->all());
+        $proveedor->update($datos);
 
         return redirect()->route('proveedores.index')
                          ->with('success', 'Proveedor actualizado.');
