@@ -21,7 +21,7 @@
                     <tr>
                         <th>Nombre</th>
                         <th>RUC</th>
-                        <th>TelÃ©fono</th>
+                        <th>Teléfono</th>
                         <th>Contacto</th>
                         <th>Email</th>
                         <th>Acciones</th>
@@ -48,7 +48,7 @@
                                 @csrf
                                 @method('DELETE')
 
-                                <button class="btn btn-sm btn-danger" onclick="return confirm('Â¿Eliminar proveedor?')">
+                                <button class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar proveedor?')">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
@@ -58,6 +58,8 @@
                     @endforeach
                 </tbody>
             </table>
+
+            {{ $proveedores->links() }}
         </div>
     </div>
 

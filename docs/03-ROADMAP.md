@@ -13,7 +13,7 @@ Cada fase tiene **objetivo**, **alcance cerrado**, **checklist** y **criterio de
 | 1 | Seguridad e integridad de datos | [#2](https://github.com/PeterAr29/supermercado-laravel/issues/2) ✅ | H-01…H-07, H-28…H-33 |
 | 2 | Dominio unificado | [#3](https://github.com/PeterAr29/supermercado-laravel/issues/3) ✅ | H-08…H-11, H-25, H-36…H-38 |
 | 3 | Paneles y roles | [#11](https://github.com/PeterAr29/supermercado-laravel/issues/11) ✅ | H-14, H-21, H-35, H-39…H-44 |
-| 4 | Separación de capas (MVC real) | [#4](https://github.com/PeterAr29/supermercado-laravel/issues/4) | H-12, H-13, H-19, H-20 |
+| 4 | Separación de capas (MVC real) | [#4](https://github.com/PeterAr29/supermercado-laravel/issues/4) ✅ | H-12, H-13, H-19, H-20, H-45, H-46 |
 | 5 | Capa de presentación | [#5](https://github.com/PeterAr29/supermercado-laravel/issues/5) | H-15…H-18 |
 | 6 | Robustez y calidad | [#6](https://github.com/PeterAr29/supermercado-laravel/issues/6) | H-22, H-23, H-24, H-34 |
 | — | Decisión sobre carpeta anidada | [#7](https://github.com/PeterAr29/supermercado-laravel/issues/7) | H-27 |
@@ -281,7 +281,7 @@ tirado. La Fase 4 construirá `CheckoutService` y `OrdenCompraService` encima.
 
 ---
 
-## Fase 4 — Separación de capas (MVC real) ⬜
+## Fase 4 — Separación de capas (MVC real) ✅
 
 **Objetivo:** que el controlador solo coordine. Es la fase que da el "orden" estructural.
 
@@ -314,8 +314,39 @@ tirado. La Fase 4 construirá `CheckoutService` y `OrdenCompraService` encima.
 - [ ] **Gestión de categorías** en `/admin`: era alcance de la Fase 3 y no se hizo.
       Hoy solo existen las que crea `CategoriaSeeder`
 
-### Criterio de aceptación
+### Criterio de aceptación — ✅ cumplido
 Ningún controlador supera **15 líneas por método**. `grep -rn "validate(" app/Http/Controllers/` no devuelve nada. El total del carrito se calcula en **un solo lugar**, y el stock se modifica **solo** desde `InventarioService`.
+
+**Verificado el 2026-08-02:**
+
+| Comprobación | Antes | Después |
+|---|---|---|
+| `validate()` en controladores de dominio | 7 | **0** |
+| Métodos de más de 15 líneas | 12 (el mayor, 62) | **1**, `ProfileController::destroy` con 16 — andamiaje de Breeze |
+| Sitios que suman el total del carrito | 3 | **1** (`CarritoService::total`) |
+| Sitios que escriben `productos.stock` | 1 | **1** (`InventarioService`) |
+
+**Contra MySQL real: 164 comprobaciones, 0 fallos.**
+- Fase 4: **40** (servicios, Form Requests, rutas, categorías)
+- No-regresión de las fases 1-3: **124**, los mismos scripts sin cambiar nada salvo las rutas que se movieron
+
+`php artisan test`: **25 pasan, 0 fallan**.
+
+### Hallazgos nuevos descubiertos durante la fase
+
+| ID | Qué era | Impacto real |
+|---|---|---|
+| H-45 | El refactor de la Fase 3 rompió la codificación de 4 vistas | **Regresión propia, fusionada en `main`**: `Teléfono` se leía `TelÃ©fono` |
+| H-46 | El RUC del proveedor no era único ni tenía longitud | `numeric` acepta `5` y `-3`; la misma empresa se podía dar de alta dos veces |
+
+**Lectura de fondo:** H-45 pasó las 60 comprobaciones de la Fase 3 porque todas
+preguntaban por el **código de estado HTTP**, y una página con la codificación
+destrozada responde 200 tan feliz. Se comprobó que la pantalla cargaba, no que
+se leyera. Una verificación solo cubre lo que pregunta.
+
+**Sobre el alcance:** `InventarioService` ya venía hecho de la Fase 3, así que
+el Bloque B construyó los otros tres servicios encima. `PanelService` no estaba
+en la lista: salió de bajar `DashboardController::index` de 27 líneas a 3.
 
 ---
 
@@ -332,7 +363,7 @@ Ningún controlador supera **15 líneas por método**. `grep -rn "validate(" app
 - [ ] Layout de tienda y layout de panel, ambos sobre la misma base; eliminar `layoutCenter`, `super`, `super-layout`, `navbar` *(H-15)*
 - [ ] Unificar la marca y el `<title>` *(H-18)*
 - [ ] Componentes Blade: `<x-producto-card>`, `<x-alerta-flash>`, `<x-tabla>` (hoy duplicados en 6 vistas)
-- [ ] Sacar el cálculo de totales de `carrito/index.blade.php`
+- [x] ~~Sacar el cálculo de totales de `carrito/index.blade.php`~~ — hecho en la Fase 4
 
 ### Criterio de aceptación
 `npm run build` genera los assets, ninguna vista referencia un CDN, y las siete pantallas de proveedores/órdenes se ven con estilos.

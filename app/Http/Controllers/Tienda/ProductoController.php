@@ -38,21 +38,23 @@ class ProductoController extends Controller
     {
         $producto->load('categoria');
 
-        // Quién lo surte, desde la base de datos. Antes venía de una hoja de
-        // Google publicada: la tercera fuente de proveedores en competencia y
-        // la única sin conexión con órdenes de compra ni stock (H-21).
-        $proveedores = $producto->proveedores()->where('activo', true)->get();
+        return view('productos.show', [
+            'producto' => $producto,
+            // Quién lo surte, desde la base de datos. Antes venía de una hoja
+            // de Google publicada: la tercera fuente de proveedores en
+            // competencia y la única sin conexión con órdenes ni stock (H-21).
+            'proveedores' => $producto->proveedores()->where('activo', true)->get(),
+            'productosSimilares' => $this->similaresA($producto),
+        ]);
+    }
 
-        $productosSimilares = Producto::where('categoria_id', $producto->categoria_id)
+    /** Del mismo pasillo, para que la ficha no sea un callejón sin salida. */
+    private function similaresA(Producto $producto)
+    {
+        return Producto::where('categoria_id', $producto->categoria_id)
             ->where('id', '!=', $producto->id)
             ->take(6)
             ->get();
-
-        return view('productos.show', compact(
-            'producto',
-            'proveedores',
-            'productosSimilares'
-        ));
     }
 
     public function porCategoria(Categoria $categoria)

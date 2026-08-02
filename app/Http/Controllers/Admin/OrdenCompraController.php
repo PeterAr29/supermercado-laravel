@@ -2,143 +2,83 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\EstadoOrdenCompra;
+use App\Exceptions\ProductoNoAsignadoException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreOrdenCompraRequest;
 use App\Models\OrdenCompra;
-use App\Models\OrdenCompraItem;
 use App\Models\Proveedor;
-use App\Services\InventarioService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Services\OrdenCompraService;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Órdenes de compra al proveedor.
+ *
+ * `store` tenía 62 líneas y hacía de todo: recorrer los dos arrays paralelos
+ * del formulario, buscar precios en el pivot, sumar el total y validar. El
+ * formulario lo aplana ahora el Form Request, y el negocio vive en
+ * OrdenCompraService.
+ */
 class OrdenCompraController extends Controller
 {
-    public function __construct(private readonly InventarioService $inventario) {}
+    public function __construct(private readonly OrdenCompraService $ordenes) {}
 
-    // Listado de ÃƒÂ³rdenes
     public function index()
     {
-        $ordenes = OrdenCompra::with('proveedor')->orderBy('id', 'desc')->paginate(10);
+        $this->authorize('viewAny', OrdenCompra::class);
+
+        $ordenes = OrdenCompra::with('proveedor')->latest('id')->paginate(10);
 
         return view('admin.ordenes.index', compact('ordenes'));
     }
 
-    // Crear nueva orden
     public function create()
     {
-        $proveedores = Proveedor::all();
+        $this->authorize('create', OrdenCompra::class);
 
-        return view('admin.ordenes.create', compact('proveedores'));
+        return view('admin.ordenes.create', ['proveedores' => Proveedor::orderBy('nombre')->get()]);
     }
 
-    // Productos del proveedor (AJAX)
-    public function productosProveedor($proveedor_id)
+    /** Catálogo de un proveedor, para el selector de la pantalla de creación. */
+    public function productosProveedor(Proveedor $proveedor)
     {
-        $proveedor = Proveedor::findOrFail($proveedor_id);
+        $this->authorize('create', OrdenCompra::class);
 
         return response()->json($proveedor->productos);
     }
 
-    // Guardar orden de compra
-    public function store(Request $request)
+    public function store(StoreOrdenCompraRequest $request)
     {
-        $request->validate([
-            'proveedor_id' => 'required|exists:proveedores,id',
-            'productos' => 'required|array',
-            'cantidades' => 'required|array',
-        ]);
-
         $proveedor = Proveedor::findOrFail($request->proveedor_id);
 
-        DB::transaction(function () use ($request, $proveedor) {
+        try {
+            $this->ordenes->crear($proveedor, $request->lineas());
+        } catch (ProductoNoAsignadoException $e) {
+            throw ValidationException::withMessages(['productos' => $e->getMessage()]);
+        }
 
-            $orden = OrdenCompra::create([
-                'proveedor_id' => $proveedor->id,
-                'estado' => EstadoOrdenCompra::Pendiente,
-                'total' => 0,
-            ]);
-
-            $total = 0;
-
-            foreach ($request->productos as $index => $producto_id) {
-
-                // El formulario envÃƒÂ­a todos los productos del proveedor,
-                // con cantidad 0 los que no se piden.
-                $cantidad = (int) ($request->cantidades[$index] ?? 0);
-
-                if ($cantidad <= 0) {
-                    continue;
-                }
-
-                // El precio de compra vive en el pivot proveedor-producto
-                $asignado = $proveedor->productos()->where('producto_id', $producto_id)->first();
-
-                if (! $asignado) {
-                    throw ValidationException::withMessages([
-                        'productos' => 'Hay productos que no estÃƒÂ¡n asignados a este proveedor.',
-                    ]);
-                }
-
-                $precio = $asignado->pivot->precio_compra;
-                $subtotal = $precio * $cantidad;
-                $total += $subtotal;
-
-                OrdenCompraItem::create([
-                    'orden_id' => $orden->id,
-                    'producto_id' => $producto_id,
-                    'cantidad' => $cantidad,
-                    'precio' => $precio,
-                    'subtotal' => $subtotal,
-                ]);
-            }
-
-            if ($total <= 0) {
-                throw ValidationException::withMessages([
-                    'cantidades' => 'Indica una cantidad mayor que cero en al menos un producto.',
-                ]);
-            }
-
-            $orden->update(['total' => $total]);
-        });
-
-        return redirect()->route('admin.ordenes.index')->with('success', 'Orden creada correctamente.');
+        return redirect()->route('admin.ordenes.index')
+            ->with('success', 'Orden creada correctamente.');
     }
 
-    // Ver detalles
     public function show(OrdenCompra $orden)
     {
+        $this->authorize('view', $orden);
+
         $orden->load('items.producto', 'proveedor');
 
         return view('admin.ordenes.show', compact('orden'));
     }
 
-    /**
-     * Marcar como recibida: la mercancÃƒÂ­a entra al inventario.
-     *
-     * El increment() directo sobre el producto desaparece: ahora la reposiciÃƒÂ³n
-     * pasa por InventarioService y deja su movimiento de entrada, para que el
-     * kardex explique de dÃƒÂ³nde saliÃƒÂ³ cada unidad (H-35).
-     */
+    /** Da la orden por recibida: la mercancía entra al inventario (H-35). */
     public function recibir(OrdenCompra $orden)
     {
-        if ($orden->estaRecibida()) {
+        if (! $orden->estaPendiente()) {
             return back()->with('error', 'La orden ya fue recibida.');
         }
 
-        DB::transaction(function () use ($orden) {
-            foreach ($orden->items as $item) {
-                $this->inventario->entrada(
-                    $item->producto,
-                    $item->cantidad,
-                    "RecepciÃƒÂ³n de la orden de compra #{$orden->id} ({$orden->proveedor->nombre})",
-                    $orden,
-                    request()->user()
-                );
-            }
+        $this->authorize('recibir', $orden);
 
-            $orden->update(['estado' => EstadoOrdenCompra::Recibido]);
-        });
+        $this->ordenes->recibir($orden, request()->user());
 
         return back()->with('success', 'Orden marcada como recibida y stock actualizado.');
     }

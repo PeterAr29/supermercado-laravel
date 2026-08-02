@@ -34,6 +34,7 @@
                         $enlaces = [
                             ['admin.dashboard', 'Resumen'],
                             ['admin.productos.index', 'Productos'],
+                            ['admin.categorias.index', 'Categorías'],
                             ['admin.inventario.index', 'Inventario'],
                             ['admin.proveedores.index', 'Proveedores'],
                             ['admin.ordenes.index', 'Órdenes'],

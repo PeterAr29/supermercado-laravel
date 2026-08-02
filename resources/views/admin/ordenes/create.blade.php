@@ -47,14 +47,16 @@
 </div>
 
 <script>
-// ðŸ”¹ Cargar productos cuando se selecciona un proveedor
+// 🔹 Cargar productos cuando se selecciona un proveedor
 document.getElementById('proveedor_id').addEventListener('change', function () {
 
     let proveedor_id = this.value;
 
     if (!proveedor_id) return;
 
-    fetch('/admin/proveedor/' + proveedor_id + '/productos')
+    // La URL se genera desde la ruta con nombre y se sustituye el marcador:
+    // escrita a mano, cualquier reorganización de rutas la rompe en silencio.
+    fetch('{{ route('admin.ajax.proveedor.productos', ['proveedor' => 'PROVEEDOR_ID']) }}'.replace('PROVEEDOR_ID', proveedor_id))
         .then(response => response.json())
         .then(productos => {
             let body = document.getElementById('productos-body');
@@ -97,7 +99,7 @@ document.getElementById('proveedor_id').addEventListener('change', function () {
 });
 
 
-// ðŸ”¹ Recalcular subtotales y total
+// 🔹 Recalcular subtotales y total
 document.addEventListener('input', function (e) {
     if (e.target.classList.contains('cantidad')) {
         actualizarSubtotales();

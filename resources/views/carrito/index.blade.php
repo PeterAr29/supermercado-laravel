@@ -11,6 +11,12 @@
         </div>
     @endif
 
+    @if(session('error'))
+        <div class="bg-red-200 text-red-800 p-3 mb-4 rounded">
+            {{ session('error') }}
+        </div>
+    @endif
+
     @if($items->isEmpty())
         <div class="bg-yellow-100 text-yellow-800 p-4 rounded">
             Tu carrito está vacío.
@@ -34,14 +40,14 @@
             </thead>
 
             <tbody>
-                @php $total = 0; @endphp
-
+                {{--
+                    El total llega calculado desde CarritoService. Antes se
+                    sumaba aquí, en un `@php $total += ...` dentro del bucle:
+                    era la tercera fórmula distinta del mismo importe, y una
+                    vista que calcula puede enseñar un precio que no es el que
+                    se cobra (H-13).
+                --}}
                 @foreach($items as $item)
-                    @php
-                        $subtotal = $item->cantidad * $item->producto->precio;
-                        $total += $subtotal;
-                    @endphp
-
                     <tr class="border-b">
                         <td class="p-3">
                             <strong>{{ $item->producto->nombre }}</strong>
@@ -56,7 +62,7 @@
                         </td>
 
                         <td class="p-3 font-bold">
-                            S/ {{ number_format($subtotal, 2) }}
+                            S/ {{ number_format($item->subtotal, 2) }}
                         </td>
 
                         <td class="p-3">

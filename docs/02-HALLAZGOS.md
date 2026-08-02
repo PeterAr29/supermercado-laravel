@@ -50,6 +50,8 @@ Auditoría del 2026-08-01 sobre `routes/`, 8 controladores de dominio, 10 modelo
 | H-42 | 🟠 | Bug | El formulario de producto nunca enviaba el stock | 3 ✅ |
 | H-43 | 🟠 | Bug | El botón "Agregar al carrito" de la ficha nunca funcionó | 3 ✅ |
 | H-44 | 🔴 | Bug | Editar un proveedor devolvía 500: el binding nunca resolvía | 3 ✅ |
+| H-45 | 🟠 | Regresión | El refactor de la Fase 3 rompió la codificación de 4 vistas | 4 ✅ |
+| H-46 | 🟡 | Bug | El RUC del proveedor no era único ni tenía longitud | 4 ✅ |
 
 ---
 
@@ -266,6 +268,44 @@ Missing required parameter for [Route: proveedores.update] [URI: proveedores/{pr
 Esto era anterior a la Fase 3. La Fase 1 dio por bueno el CRUD de proveedores porque su criterio de aceptación comprobaba crear y listar, no editar.
 
 **Arreglo (Fase 3):** `->parameters(['proveedores' => 'proveedor'])`. Tercera vez que el proyecto paga por dejar que el framework adivine plurales en español (H-29, H-30, esta).
+
+### H-45 — El refactor de la Fase 3 rompió la codificación de 4 vistas
+**Descubierto al leer una vista durante la Fase 4.** *(Resuelto en la Fase 4.)*
+
+**Dónde:** `admin/proveedores/{index,form}` · `admin/proveedores/productos/index` · `admin/ordenes/index`
+
+**Regresión introducida por el propio refactor, y fusionada en `main` sin detectar.**
+
+Al mover las vistas a `admin/` había que reescribir en bloque los nombres de ruta (`proveedores.*` → `admin.proveedores.*`). Se hizo con PowerShell:
+
+```powershell
+$c = Get-Content $path -Raw          # lee como ANSI si el fichero no tiene BOM
+...
+Set-Content $path $c -Encoding utf8  # escribe como UTF-8
+```
+
+En Windows PowerShell 5.1 `Get-Content` **asume la codepage del sistema** cuando el fichero no lleva BOM. Los ficheros eran UTF-8 sin BOM, así que cada carácter acentuado se leyó como dos caracteres cp1252 y se volvió a escribir como UTF-8: `Teléfono` → `TelÃ©fono`.
+
+Lo que hace que esto sea instructivo no es el fallo, sino **por qué pasó la verificación**: las 60 comprobaciones de la Fase 3 preguntaban por el código de estado HTTP, y una página con la codificación destrozada responde 200 tan feliz. Se comprobó que la pantalla *cargaba*, no que se *leyera*.
+
+**Arreglo (Fase 4):** revertir la doble codificación y comprobar, carácter a carácter, que el repertorio de caracteres no ASCII coincide con la versión anterior al refactor. El emoji del script de órdenes necesitó `cp1252` y no `latin-1`: el daño lo hizo PowerShell, y su codepage tiene caracteres (`Ÿ`, U+0178) que latin-1 no puede representar.
+
+**Prevención:** ninguna reescritura masiva de ficheros con `Get-Content`/`Set-Content`. Recogido en `04-CONVENCIONES.md`.
+
+### H-46 — El RUC del proveedor no era único ni tenía longitud
+**Descubierto al escribir los Form Requests (Fase 4).** *(Resuelto en la Fase 4.)*
+
+**Dónde:** `ProveedorController::{store,update}`
+
+```php
+'ruc' => 'required|numeric',
+```
+
+`numeric` acepta `5`, `-3` y `1.5`. Un RUC peruano son **once dígitos**, y es lo que identifica a la empresa: sin unicidad, el mismo proveedor se podía dar de alta dos veces y sus productos y órdenes quedaban repartidos entre las dos fichas.
+
+No llegó a ocurrir —los 6 proveedores existentes tienen los 11 dígitos y ninguno repetido, comprobado antes de imponer la regla— pero nada lo impedía.
+
+**Arreglo (Fase 4):** `digits:11` y `Rule::unique`, con `ignore()` en la edición para que guardar sin tocar nada no choque contra su propia fila.
 
 ### H-35 — Las ventas no descuentan stock
 **Descubierto al replantear el roadmap (2026-08-01).** *(Asignado a la Fase 3.)*
