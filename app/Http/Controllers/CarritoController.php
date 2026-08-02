@@ -4,20 +4,42 @@ namespace App\Http\Controllers;
 
 use App\Models\Carrito;
 use App\Models\CarritoItem;
-use App\Models\Order;
 use App\Models\Producto;
+use App\Models\Venta;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 
 class CarritoController extends Controller
 {
-    private function obtenerCarrito()
+    /**
+     * Carrito activo.
+     *
+     * Autenticado: el carrito persistente del usuario, que sobrevive al cierre
+     * de sesión. Invitado: uno identificado por la sesión (H-11).
+     *
+     * Antes 'user_id' existía en la tabla pero no se escribía nunca: al iniciar
+     * sesión, el usuario perdía lo que hubiera añadido.
+     */
+    private function obtenerCarrito(): Carrito
     {
-        if (! Session::has('carrito_id')) {
-            $carrito = Carrito::create();
-            Session::put('carrito_id', $carrito->id);
+        if (Auth::check()) {
+            return Auth::user()->carrito()->firstOrCreate([]);
         }
 
-        return Carrito::find(Session::get('carrito_id'));
+        if (Session::has('carrito_id')) {
+            $carrito = Carrito::whereNull('user_id')->find(Session::get('carrito_id'));
+
+            if ($carrito) {
+                return $carrito;
+            }
+        }
+
+        $carrito = Carrito::create();
+        Session::put('carrito_id', $carrito->id);
+
+        return $carrito;
     }
 
     /**
@@ -25,55 +47,60 @@ class CarritoController extends Controller
      *
      * Un producto retirado (SoftDeletes, H-02) deja de resolverse desde su línea:
      * sin este filtro el carrito calcularía su subtotal como 0 y permitiría
-     * pagar 0 por un producto que ya no se vende.
+     * pagar 0 por un producto que ya no se vende (H-32).
      */
-    private function itemsVigentes($carrito)
+    private function itemsVigentes(Carrito $carrito)
     {
         return $carrito->items()->whereHas('producto')->with('producto')->get();
     }
 
+    private function calcularTotal($items): float
+    {
+        return (float) $items->sum(fn ($i) => $i->cantidad * $i->producto->precio);
+    }
+
     public function index()
     {
-        $carrito = $this->obtenerCarrito();
-        $items = $this->itemsVigentes($carrito);
+        $items = $this->itemsVigentes($this->obtenerCarrito());
 
         return view('carrito.index', compact('items'));
     }
 
-    public function agregar()
+    public function agregar(Request $request)
     {
-        // ⛔ IMPORTANTE → Debe llamarse 'producto_id'
-        $producto_id = request('producto_id');
+        $datos = $request->validate([
+            'producto_id' => 'required|exists:productos,id',
+            'cantidad' => 'nullable|integer|min:1|max:99',
+        ]);
 
-        if (! $producto_id) {
-            return redirect()->back()->with('error', 'Error: No se recibió producto_id.');
-        }
-
-        $producto = Producto::findOrFail($producto_id);
+        $producto = Producto::findOrFail($datos['producto_id']);
         $carrito = $this->obtenerCarrito();
+        $cantidad = $datos['cantidad'] ?? 1;
 
-        // Busca si ya existe
-        $item = CarritoItem::where('carrito_id', $carrito->id)
-            ->where('producto_id', $producto_id)
-            ->first();
+        $item = $carrito->items()->where('producto_id', $producto->id)->first();
 
         if ($item) {
-            $item->cantidad += 1;
-            $item->save();
+            $item->increment('cantidad', $cantidad);
         } else {
-            CarritoItem::create([
-                'carrito_id' => $carrito->id,
-                'producto_id' => $producto_id,
-                'cantidad' => 1,
+            $carrito->items()->create([
+                'producto_id' => $producto->id,
+                'cantidad' => $cantidad,
             ]);
         }
 
         return redirect()->back()->with('success', 'Producto agregado al carrito');
     }
 
+    /**
+     * Solo se pueden borrar líneas del propio carrito.
+     *
+     * Antes bastaba con conocer el id para borrar la línea de cualquiera (H-36).
+     */
     public function eliminar($id)
     {
-        $item = CarritoItem::findOrFail($id);
+        $carrito = $this->obtenerCarrito();
+
+        $item = CarritoItem::where('carrito_id', $carrito->id)->findOrFail($id);
         $item->delete();
 
         return redirect()->back()->with('success', 'Producto eliminado del carrito');
@@ -81,24 +108,20 @@ class CarritoController extends Controller
 
     public function vaciar()
     {
-        $carrito = $this->obtenerCarrito();
-
-        // Eliminar todos los items del carrito
-        CarritoItem::where('carrito_id', $carrito->id)->delete();
+        $this->obtenerCarrito()->items()->delete();
 
         return redirect()->back()->with('success', 'Carrito vaciado correctamente');
     }
 
     public function mostrarPago()
     {
-        $carrito = $this->obtenerCarrito();
-        $items = $this->itemsVigentes($carrito);
+        $items = $this->itemsVigentes($this->obtenerCarrito());
 
         if ($items->isEmpty()) {
-            return redirect('/carrito')->with('error', 'El carrito está vacío.');
+            return redirect()->route('carrito.index')->with('error', 'El carrito está vacío.');
         }
 
-        $total = $items->sum(fn ($i) => $i->cantidad * $i->producto->precio);
+        $total = $this->calcularTotal($items);
 
         return view('pago.confirmar', compact('items', 'total'));
     }
@@ -109,35 +132,35 @@ class CarritoController extends Controller
         $items = $this->itemsVigentes($carrito);
 
         if ($items->isEmpty()) {
-            return redirect('/carrito')->with('error', 'El carrito está vacío.');
+            return redirect()->route('carrito.index')->with('error', 'El carrito está vacío.');
         }
 
-        $total = $items->sum(fn ($i) => $i->cantidad * $i->producto->precio);
+        $venta = DB::transaction(function () use ($carrito, $items) {
 
-        // Registrar orden
-        $order = Order::create([
-            'total' => $total,
-        ]);
-
-        // Registrar items
-        foreach ($items as $item) {
-            $order->items()->create([
-                'producto_id' => $item->producto_id,
-                'cantidad' => $item->cantidad,
-                'precio' => $item->producto->precio,
+            $venta = Venta::create([
+                // Nullable: la tienda permite comprar como invitado (H-10)
+                'user_id' => Auth::id(),
+                'total' => $this->calcularTotal($items),
             ]);
-        }
 
-        // Vaciar carrito
-        $carrito->items()->delete();
+            foreach ($items as $item) {
+                $venta->items()->create([
+                    'producto_id' => $item->producto_id,
+                    'cantidad' => $item->cantidad,
+                    'precio' => $item->producto->precio,
+                ]);
+            }
 
-        return redirect()->route('pago.exito')->with('order_id', $order->id);
+            $carrito->items()->delete();
+
+            return $venta;
+        });
+
+        return redirect()->route('pago.exito')->with('venta_id', $venta->id);
     }
 
     public function pagoExitoso()
     {
-        $order_id = session('order_id');
-
-        return view('pago.exito', compact('order_id'));
+        return view('pago.exito', ['venta_id' => session('venta_id')]);
     }
 }

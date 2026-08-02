@@ -16,8 +16,8 @@
 
         <div class="mt-4 p-4 rounded" 
              style="background: #f8f9fa; border: 1px solid #e0e0e0;">
-            <p class="mb-1 fs-5">Número de orden:</p>
-            <h2 class="text-primary fw-bold mb-0">#{{ $order_id }}</h2>
+            <p class="mb-1 fs-5">Número de venta:</p>
+            <h2 class="text-primary fw-bold mb-0">#{{ $venta_id }}</h2>
         </div>
 
         <a href="/productos" class="btn btn-primary mt-4 py-3 fs-5 w-100" 

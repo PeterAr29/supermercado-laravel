@@ -42,4 +42,21 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    /** Compras del usuario, para "Mis pedidos" (H-10). */
+    public function ventas()
+    {
+        return $this->hasMany(Venta::class)->latest();
+    }
+
+    /**
+     * Carrito persistente del usuario (H-11).
+     *
+     * El AppServiceProvider ya invocaba esta relación, pero no existía:
+     * Eloquent devolvía null y el contador del carrito nunca se activaba (H-08).
+     */
+    public function carrito()
+    {
+        return $this->hasOne(Carrito::class);
+    }
 }
