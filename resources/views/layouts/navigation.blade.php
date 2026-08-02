@@ -41,8 +41,24 @@
             </a>
 
             @auth
-                <a href="{{ route('dashboard') }}" class="text-gray-700 hover:text-black">
-                    Dashboard
+                {{--
+                    El enlace al panel solo existe para quien tiene rol de
+                    administrador. Un cliente no ve ningún enlace de gestión:
+                    hasta la Fase 3 los veía todos, y además funcionaban (H-14).
+                --}}
+                @if(auth()->user()->esAdmin())
+                    <a href="{{ route('admin.dashboard') }}"
+                       class="bg-gray-900 text-white px-3 py-1.5 rounded text-sm hover:bg-gray-700">
+                        Panel
+                    </a>
+                @endif
+
+                <a href="{{ route('mis-pedidos.index') }}" class="text-gray-700 hover:text-black">
+                    Mis pedidos
+                </a>
+
+                <a href="{{ route('mi-cuenta') }}" class="text-gray-700 hover:text-black">
+                    Mi cuenta
                 </a>
 
                 <form method="POST" action="{{ route('logout') }}">

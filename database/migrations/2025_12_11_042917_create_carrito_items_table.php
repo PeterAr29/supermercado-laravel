@@ -9,7 +9,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-        public function up()
+    public function up()
     {
         Schema::create('carrito_items', function (Blueprint $table) {
             $table->id();
@@ -25,7 +25,6 @@ return new class extends Migration
             $table->foreign('producto_id')->references('id')->on('productos')->onDelete('cascade');
         });
     }
-
 
     /**
      * Reverse the migrations.

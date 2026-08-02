@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\RolUsuario;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
@@ -41,6 +42,12 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
+
+        // Registrarse en la tienda crea un cliente, nunca un administrador
+        // (H-14). Explícito y no por el default de la columna: quien lea este
+        // método tiene que ver qué rol se está creando.
+        $user->rol = RolUsuario::Cliente;
+        $user->save();
 
         event(new Registered($user));
 

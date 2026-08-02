@@ -10,7 +10,7 @@ class CarritoItem extends Model
     use HasFactory;
 
     protected $fillable = [
-        'carrito_id', 'producto_id', 'cantidad'
+        'carrito_id', 'producto_id', 'cantidad',
     ];
 
     public function carrito()

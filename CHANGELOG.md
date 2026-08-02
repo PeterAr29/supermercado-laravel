@@ -6,6 +6,44 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [No publicado]
 
+### Fase 3 — Paneles y roles — 2026-08-02
+
+**Seguridad**
+- Hay dos roles, `cliente` y `admin`. Hasta hoy cualquiera que se registrara entraba con acceso total de gestión (`H-14`)
+- La zona de gestión vive en `/admin` detrás del middleware `admin`; el cliente recibe 403
+- Policies de `Producto`, `Proveedor`, `OrdenCompra` y `Venta`. La de `Venta` pregunta por la propiedad: un pedido ajeno devuelve 403
+- Registrarse en la tienda crea **siempre** un cliente; `rol` no es asignable en masa
+
+**Añadido**
+- Panel de administración con layout propio: resumen del día, gestión de productos, inventario, proveedores y órdenes
+- Panel de cliente: `/mi-cuenta`, `/mis-pedidos` y el detalle de cada pedido
+- **Movimientos de inventario** (`H-35`): tabla `movimientos_inventario` con tipo, cantidad con signo, stock resultante, motivo, documento de origen y usuario
+- `InventarioService`, único punto que modifica `productos.stock`
+- Kardex por producto y ajuste manual con motivo obligatorio
+- `productos.stock_minimo` y aviso de reposición en el panel
+- Namespaces `Controllers/Admin/` y `Controllers/Tienda/`
+
+**Cambiado**
+- **La venta descuenta stock.** Antes el inventario solo subía (`H-35`)
+- Se comprueba el stock al añadir al carrito y antes de la pantalla de pago
+- La recepción de órdenes deja de hacer `increment()` directo
+- Google Sheets se retira: la base de datos es la única fuente de proveedores (`H-21`)
+
+**Corregido**
+- Un usuario ya no puede acabar con dos carritos a la vez (`H-39`)
+- Asignar dos veces el mismo producto a un proveedor devuelve un mensaje, no un 500 (`H-40`)
+- El carrito ya no acepta productos retirados del catálogo (`H-41`)
+- El formulario de producto por fin envía el stock: antes todo producto creado desde la app nacía con 0 unidades (`H-42`)
+- El botón "Agregar al carrito" de la ficha de producto, que nunca funcionó (`H-43`)
+- Editar un proveedor ya no devuelve 500: `Route::resource` generaba `{proveedore}`, que no casaba con el argumento del controlador (`H-44`)
+
+**Notas**
+- H-44 es la tercera vez que el proyecto paga por dejar que Laravel adivine plurales en español (H-29, H-30, H-44)
+- `InventarioService` se adelanta desde la Fase 4: H-35 lo necesita en dos flujos
+- Verificado contra MySQL real: 124 comprobaciones en tres bloques, 0 fallos. `php artisan test`: 25 pasan
+
+---
+
 ### Fase 2 — Dominio unificado — 2026-08-02
 
 **Cambiado**
@@ -77,7 +115,6 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 | Fase | Nombre | Estado |
 |---|---|---|
-| 3 | Paneles y roles | ⬜ Pendiente |
 | 4 | Separación de capas (MVC real) | ⬜ Pendiente |
 | 5 | Capa de presentación | ⬜ Pendiente |
 | 6 | Robustez y calidad | ⬜ Pendiente |
