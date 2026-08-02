@@ -36,17 +36,18 @@
                 </span>
             </div>
 
-            {{-- INPUT OPCIONAL --}}
-            <div class="mt-6">
-                <label class="font-semibold text-sm">
-                    ¿Qué debemos considerar al comprar este producto?
-                </label>
-                <textarea
-                    class="w-full border rounded-lg p-3 mt-2 focus:ring focus:ring-red-200"
-                    rows="3"
-                    placeholder="Ej: Tipo de corte, tamaño, color..."
-                ></textarea>
-            </div>
+            {{--
+                Aquí había un campo «¿Qué debemos considerar al comprar este
+                producto?» que quedaba FUERA del formulario de más abajo: sin
+                name, no viajaba en el POST y nadie lo leía. El cliente escribía
+                su indicación, el producto entraba al carrito y la nota se
+                evaporaba sin avisar (H-50).
+
+                Se retira en vez de conectarse, por el mismo motivo por el que
+                la dirección del cliente salió del roadmap: sin nadie que
+                prepare el pedido, la indicación no la lee ningún humano.
+                Vuelve cuando exista preparación de pedidos.
+            --}}
 
             {{-- DISPONIBILIDAD --}}
             <p class="mt-4 text-sm">
