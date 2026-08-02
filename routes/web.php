@@ -23,8 +23,9 @@ Route::middleware('auth')->group(function () {
     // Productos — todo salvo consultar
     Route::resource('productos', ProductoController::class)->except(['index', 'show']);
 
-    // Proveedores
-    Route::resource('proveedores', ProveedorController::class);
+    // Proveedores — sin 'show': no existe ficha de detalle y el resource
+    // registraba una ruta que reventaba con 500 (H-07).
+    Route::resource('proveedores', ProveedorController::class)->except(['show']);
 
     // Productos por proveedor (N:N)
     Route::prefix('proveedores/{proveedor}')->name('proveedor.productos.')->group(function () {

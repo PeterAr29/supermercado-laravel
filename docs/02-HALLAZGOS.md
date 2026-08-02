@@ -33,6 +33,7 @@ Auditoría del 2026-08-01 sobre `routes/`, 8 controladores de dominio, 10 modelo
 | H-25 | 🟡 | Esquema | Inconsistencias de tipos, casts, índices y enums | 2 |
 | H-26 | 🟠 | Gestión | Sin control de versiones | 0 |
 | H-27 | 🟢 | Gestión | Carpeta anidada y `package-lock.json` huérfano | 0 |
+| H-28 | 🔴 | Bug | Falta la relación `Producto::proveedores()` que ya se usaba | 1 |
 
 ---
 
@@ -90,6 +91,19 @@ Es el peor tipo de bug: valida, guarda, redirige con "creado correctamente" y pi
 `DB::beginTransaction()` sin `try/catch`. Si el `foreach` falla a mitad (producto inexistente, pivot nulo — muy probable dado H-04), queda una orden huérfana con total 0 y la transacción sin cerrar.
 
 **Arreglo:** `DB::transaction(function () { ... })` con closure.
+
+### H-28 — Falta la relación `Producto::proveedores()` que ya se usaba
+**Descubierto durante la Fase 1.** *(Resuelto en la misma fase: bloquea el criterio de aceptación nº 3.)*
+
+**Dónde:** `app/Http/Controllers/ProveedorProductoController.php:22` · `app/Models/Producto.php`
+```php
+$productos = Producto::whereDoesntHave('proveedores', ...)
+```
+El modelo `Producto` solo declaraba `categoria()`. La relación `proveedores()` **nunca existió**, así que el formulario de asignar un producto a un proveedor lanzaba `BadMethodCallException: Call to undefined relationship`.
+
+Es un segundo punto de rotura del mismo flujo que H-04, pero de causa independiente: aunque el pivot hubiera tenido la columna correcta, el formulario habría fallado igual.
+
+**Arreglo:** declarar `Producto::proveedores()` como inversa de `Proveedor::productos()`, con el mismo `withPivot()`.
 
 ### H-07 — `proveedores.show` devuelve 500
 **Dónde:** `routes/web.php:43` · `app/Http/Controllers/ProveedorController.php`
