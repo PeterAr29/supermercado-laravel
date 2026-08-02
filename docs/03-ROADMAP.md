@@ -12,10 +12,20 @@ Cada fase tiene **objetivo**, **alcance cerrado**, **checklist** y **criterio de
 | 0 | Control de versiones y gestión | [#1](https://github.com/PeterAr29/supermercado-laravel/issues/1) ✅ | H-26 |
 | 1 | Seguridad e integridad de datos | [#2](https://github.com/PeterAr29/supermercado-laravel/issues/2) ✅ | H-01…H-07, H-28…H-33 |
 | 2 | Dominio unificado | [#3](https://github.com/PeterAr29/supermercado-laravel/issues/3) | H-08…H-11, H-25 |
-| 3 | Separación de capas (MVC real) | [#4](https://github.com/PeterAr29/supermercado-laravel/issues/4) | H-12, H-13, H-14, H-19, H-20 |
-| 4 | Capa de presentación | [#5](https://github.com/PeterAr29/supermercado-laravel/issues/5) | H-15…H-18 |
-| 5 | Robustez y calidad | [#6](https://github.com/PeterAr29/supermercado-laravel/issues/6) | H-21…H-24 |
+| **3** | **Paneles y roles** 🆕 | [#11](https://github.com/PeterAr29/supermercado-laravel/issues/11) | H-14, H-21, H-35 |
+| 4 | Separación de capas (MVC real) | [#4](https://github.com/PeterAr29/supermercado-laravel/issues/4) | H-12, H-13, H-19, H-20 |
+| 5 | Capa de presentación | [#5](https://github.com/PeterAr29/supermercado-laravel/issues/5) | H-15…H-18 |
+| 6 | Robustez y calidad | [#6](https://github.com/PeterAr29/supermercado-laravel/issues/6) | H-22, H-23, H-24, H-34 |
 | — | Decisión sobre carpeta anidada | [#7](https://github.com/PeterAr29/supermercado-laravel/issues/7) | H-27 |
+
+### Cambio de plan — 2026-08-01
+
+Tras repoblar el catálogo se replantea el roadmap por dos decisiones del responsable:
+
+1. **Google Sheets se retira.** Había **tres** fuentes de proveedores compitiendo (la tabla `proveedores` y dos hojas publicadas distintas). Solo la BD está integrada con órdenes de compra y stock. H-21 pasa de "cachear Sheets" a "eliminar Sheets", y se mueve de la Fase 6 a la Fase 3.
+2. **El supermercado necesita dos paneles**, uno de cliente y otro de administración. Se inserta la **Fase 3 — Paneles y roles**, y las fases 3-5 antiguas pasan a 4-6.
+
+H-14 (roles) se adelanta de la antigua Fase 3 a la nueva, por urgencia: hoy cualquier registrado es administrador.
 
 ---
 
@@ -125,13 +135,15 @@ pero ninguna migración la creaba — se había añadido a mano. La migración d
 
 **Objetivo:** un solo vocabulario y un `User` conectado a sus compras.
 
+**Por qué antes del panel:** el panel de cliente ("Mis pedidos") necesita que las ventas sepan a quién pertenecen. Hoy no lo saben.
+
 ### Checklist
 
 **Bloque A — Renombrado** *(H-09)*
 - [ ] `Order` → `Venta`, `OrderItem` → `VentaItem`
 - [ ] Migración de renombrado de tablas: `orders` → `ventas`, `order_items` → `venta_items`
 - [ ] Actualizar `CarritoController::procesarPago`, vistas `pago/*` y rutas
-- [ ] Añadir `VentaItem::producto()` y `OrdenCompraItem::orden()` (relaciones que faltan)
+- [ ] Añadir `VentaItem::producto()` (con `withTrashed()`, ver H-32) y `OrdenCompraItem::orden()`
 
 **Bloque B — Usuario conectado** *(H-10, H-11, H-08)*
 - [ ] `ventas.user_id` nullable + `Venta::user()` + `User::ventas()`
@@ -145,7 +157,7 @@ pero ninguna migración la creaba — se había añadido a mano. La migración d
 - [ ] `$casts` de importes (`decimal:2`) en todos los modelos
 - [ ] Índices únicos en `proveedor_producto(proveedor_id, producto_id)` y `carrito_items(carrito_id, producto_id)`
 - [ ] Enums PHP 8.1: `EstadoOrdenCompra`, `UnidadMedida` + `$casts`
-- [ ] `unidad_medida` al `$fillable` de `Producto`
+- [ ] `unidad_medida` al `$fillable` de `Producto` (hoy `ProductoSeeder` la asigna fuera de él)
 - [ ] Timestamps en el pivot
 
 ### Criterio de aceptación
@@ -153,9 +165,63 @@ No queda ninguna referencia a `Order`/`OrderItem` (`grep -ri "OrderItem" app/ re
 
 ---
 
-## Fase 3 — Separación de capas (MVC real) ⬜
+## Fase 3 — Paneles y roles ⬜ 🆕
+
+**Objetivo:** que el supermercado tenga **dos caras**: la tienda para el cliente y el panel de gestión para el administrador. Y que el inventario refleje de verdad lo que entra y lo que sale.
+
+**Por qué existe esta fase:** decidida el 2026-08-01. La Fase 1 cerró la puerta a los anónimos, pero dejó a **cualquier registrado con acceso total de administrador** (H-14). Además, el inventario solo cuenta la mitad de la historia: las órdenes de compra suman stock, pero **las ventas no lo descuentan** (H-35).
+
+### Bloque A — Roles y separación *(H-14)* 🔴
+- [ ] Campo `rol` en `users` (`cliente` | `admin`) + enum + `$casts`
+- [ ] `UserSeeder` marca al administrador
+- [ ] Middleware `admin` sobre la zona de gestión
+- [ ] `ProductoPolicy`, `ProveedorPolicy`, `OrdenCompraPolicy`
+- [ ] Registrarse en `/register` crea un **cliente**, nunca un administrador
+
+### Bloque B — Panel de cliente
+- [ ] `/mi-cuenta` — perfil, dirección, datos
+- [ ] `/mis-pedidos` — historial de ventas del usuario (necesita `ventas.user_id` de la Fase 2)
+- [ ] `/mis-pedidos/{venta}` — detalle de una compra
+- [ ] El cliente **nunca** ve enlaces de gestión
+
+### Bloque C — Panel de administrador
+- [ ] Prefijo `/admin` con su propio layout y navegación
+- [ ] Dashboard: ventas del día, productos bajo mínimo, órdenes pendientes
+- [ ] Gestión de productos, categorías y proveedores (mover ahí lo que hoy cuelga de la raíz)
+- [ ] Gestión de órdenes de compra
+- [ ] Namespaces `Controllers/Admin/` y `Controllers/Tienda/`
+
+### Bloque D — Entradas y salidas de inventario *(H-35)* 🔴
+- [ ] **La venta descuenta stock** — hoy `procesarPago` no lo toca
+- [ ] Validar stock disponible antes de confirmar la venta
+- [ ] Tabla `movimientos_inventario`: producto, tipo (`entrada`/`salida`/`ajuste`), cantidad, motivo, documento de origen, usuario, fecha
+- [ ] Registrar el movimiento en ambos flujos: recepción de orden (entrada) y venta (salida)
+- [ ] Ajuste manual de stock desde el panel, con motivo obligatorio
+- [ ] Vista de kardex por producto: de dónde viene y a dónde va cada unidad
+
+### Bloque E — Retirar Google Sheets *(H-21)*
+- [ ] Eliminar `ProveedorSheetService` y `ProveedorSheetController`
+- [ ] Eliminar la vista `proveedores/sheet.blade.php` y su ruta
+- [ ] Quitar el bloque de proveedores de `productos/show`, o servirlo desde la BD
+- [ ] La BD queda como **única fuente** de proveedores
+
+### Criterio de aceptación
+1. Un usuario recién registrado **no** puede entrar en `/admin` ni ver enlaces de gestión.
+2. El administrador entra en `/admin` y gestiona productos, proveedores y órdenes.
+3. El cliente ve **sus** pedidos en `/mis-pedidos`, y solo los suyos.
+4. Una venta **descuenta stock** y deja un movimiento de tipo `salida`.
+5. Recibir una orden **suma stock** y deja un movimiento de tipo `entrada`.
+6. El kardex de un producto cuadra: `stock actual = entradas − salidas ± ajustes`.
+7. No queda ninguna referencia a `docs.google.com` en el código.
+
+---
+
+## Fase 4 — Separación de capas (MVC real) ⬜
 
 **Objetivo:** que el controlador solo coordine. Es la fase que da el "orden" estructural.
+
+> Antes era la Fase 3. Se desplaza al insertarse "Paneles y roles".
+> H-14 sale de aquí: se adelanta a la Fase 3 por urgencia.
 
 ### Checklist
 
@@ -167,62 +233,62 @@ No queda ninguna referencia a `Order`/`OrderItem` (`grep -ri "OrderItem" app/ re
 
 **Bloque B — Servicios** *(H-13)*
 - [ ] `CarritoService`: obtener, agregar, eliminar, vaciar, **calcular total (fuente única)**
-- [ ] `CheckoutService`: crear venta + descontar stock, dentro de una transacción
+- [ ] `CheckoutService`: crear venta + descontar stock + registrar movimiento, en transacción
 - [ ] `OrdenCompraService`: crear orden y recepcionar con reposición
+- [ ] `InventarioService`: único punto que modifica stock y escribe movimientos
 - [ ] Vistas y controladores consumen el total del servicio, nunca lo recalculan
 
-**Bloque C — Autorización** *(H-14)*
-- [ ] Campo `rol` en `users` (o paquete de roles si crece)
-- [ ] `ProductoPolicy`, `ProveedorPolicy`, `OrdenCompraPolicy`
-- [ ] `authorize()` en los controladores; middleware `auth` pasa a ser el suelo, no el techo
-
-**Bloque D — Rutas y binding** *(H-19, H-20)*
-- [ ] Eliminar la ruta duplicada `productos.index`
-- [ ] Reorganizar `web.php`: bloque público / bloque cliente autenticado / bloque `admin`
+**Bloque C — Rutas y binding** *(H-19, H-20)*
+- [ ] Eliminar la ruta duplicada `productos.index` *(ya hecho en la Fase 1)*
 - [ ] `Route::resource` para órdenes de compra
 - [ ] La ruta AJAX pasa a `routes/api.php` o a un prefijo `ajax/` con nombre
 - [ ] Route model binding en **todos** los métodos (`show(Producto $producto)`)
-- [ ] Namespaces `Controllers/Admin/` y `Controllers/Tienda/`
 
 ### Criterio de aceptación
-Ningún controlador supera **15 líneas por método**. `grep -rn "validate(" app/Http/Controllers/` no devuelve nada. El total del carrito se calcula en **un solo lugar** del código.
+Ningún controlador supera **15 líneas por método**. `grep -rn "validate(" app/Http/Controllers/` no devuelve nada. El total del carrito se calcula en **un solo lugar**, y el stock se modifica **solo** desde `InventarioService`.
 
 ---
 
-## Fase 4 — Capa de presentación ⬜
+## Fase 5 — Capa de presentación ⬜
 
 **Objetivo:** un solo sistema visual. Hoy hay siete pantallas literalmente sin estilos.
+
+> Antes era la Fase 4.
 
 ### Checklist
 - [ ] **Decidir framework: Tailwind** (ya configurado con Vite) y documentarlo en `04-CONVENCIONES.md`
 - [ ] Migrar a Tailwind las 7 vistas escritas en Bootstrap *(H-16)*: `proveedores/{index,create,edit,form}`, `ordenes/{index,create,show}`
 - [ ] Sustituir el CDN de Tailwind por `@vite` *(H-17)*
-- [ ] Un único layout base; eliminar `layoutCenter`, `super`, `super-layout`, `navbar` *(H-15)*
+- [ ] Layout de tienda y layout de panel, ambos sobre la misma base; eliminar `layoutCenter`, `super`, `super-layout`, `navbar` *(H-15)*
 - [ ] Unificar la marca y el `<title>` *(H-18)*
 - [ ] Componentes Blade: `<x-producto-card>`, `<x-alerta-flash>`, `<x-tabla>` (hoy duplicados en 6 vistas)
 - [ ] Sacar el cálculo de totales de `carrito/index.blade.php`
 
 ### Criterio de aceptación
-`npm run build` genera los assets, ninguna vista referencia un CDN, `resources/views/layouts/` contiene un solo layout de tienda (más el `guest` de Breeze) y las siete pantallas de proveedores/órdenes se ven con estilos.
+`npm run build` genera los assets, ninguna vista referencia un CDN, y las siete pantallas de proveedores/órdenes se ven con estilos.
 
 ---
 
-## Fase 5 — Robustez y calidad ⬜
+## Fase 6 — Robustez y calidad ⬜
 
 **Objetivo:** que aguante datos y uso reales.
 
+> Antes era la Fase 5. H-21 sale de aquí: Google Sheets se retira en la Fase 3 en lugar de arreglarse.
+
 ### Checklist
-- [ ] Unificar `ProveedorSheetService` + `ProveedorSheetController` en un solo servicio *(H-21)*
-- [ ] URLs de Sheets a `config/services.php` + `.env`
-- [ ] `Cache::remember(..., 600)` y `->timeout(5)`; degradar a lista vacía si Google falla (nunca `abort(500)`)
 - [ ] Paginación en productos y proveedores *(H-22)*
-- [ ] `DatabaseSeeder` invoca `CategoriaSeeder`, `ProductoSeeder`, `ProveedorSeeder` *(H-23)*
-- [ ] Factories de `Producto`, `Categoria`, `Proveedor`
-- [ ] Tests de feature *(H-24)*: agregar al carrito · checkout descuenta stock · recibir orden repone stock · invitado no puede borrar productos
-- [ ] `php artisan pint` sobre todo el código (ya está en `require-dev`)
+- [ ] Factories de `Producto`, `Categoria`, `Proveedor` *(H-23; los seeders ya están hechos)*
+- [ ] Copia de seguridad previa a cada fase, automatizada *(H-34)*
+- [ ] Tests de feature *(H-24)*:
+  - [ ] agregar al carrito
+  - [ ] el checkout descuenta stock y registra el movimiento
+  - [ ] recibir una orden repone stock y registra el movimiento
+  - [ ] un invitado no puede borrar productos
+  - [ ] un cliente no puede entrar en `/admin`
+- [ ] `php artisan pint` sobre todo el código
 
 ### Criterio de aceptación
-`php artisan migrate:fresh --seed` deja una base usable. `php artisan test` pasa en verde con al menos 4 tests de dominio nuevos. La ficha de producto carga sin esperar a Google.
+`php artisan migrate:fresh --seed` deja una base usable. `php artisan test` pasa en verde con al menos 5 tests de dominio nuevos.
 
 ---
 
@@ -233,6 +299,7 @@ Ideas válidas que **no** entran en estas fases, para no dispersar el trabajo:
 - Pasarela de pago real (hoy el pago es simulado)
 - Subida de imágenes a `storage` (hoy `imagen` es una URL de texto)
 - Búsqueda en tiempo real (el comentario ya está en `layouts/navigation.blade.php:22`)
-- Panel de reportes / dashboard con métricas de venta
+- Reportes avanzados y exportación a Excel/PDF
 - API REST para app móvil (`routes/api.php` está vacío)
 - Gestión de ofertas y promociones (el carrusel del home es una imagen fija)
+- Alertas de stock mínimo por correo
