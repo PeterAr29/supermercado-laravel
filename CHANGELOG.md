@@ -6,6 +6,33 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [No publicado]
 
+### Fase 4 — Separación de capas (MVC real) — 2026-08-02
+
+**Cambiado**
+- La validación sale de los controladores a **nueve Form Requests**, que además autorizan (`H-12`)
+- Las reglas de negocio salen a **cuatro servicios** (`H-13`): `CarritoService`, `CheckoutService`, `OrdenCompraService` y `PanelService`, todos sobre el `InventarioService` de la Fase 3
+- El total del carrito se calcula en **un solo sitio**. Estaba en tres, uno de ellos dentro de la tabla de `carrito/index.blade.php`
+- Ningún método de controlador de dominio supera las 15 líneas. El mayor tenía 62
+- `Route::resource` para órdenes de compra, y la ruta AJAX pasa al prefijo `ajax/` con nombre (`H-19`)
+- Route model binding en todos los métodos: `ProveedorProductoController` recibía `$producto_id` suelto (`H-20`)
+- La vista genera la URL del AJAX desde la ruta con nombre, no escrita a mano
+
+**Añadido**
+- **Gestión de categorías** en `/admin`, con su política. Era alcance de la Fase 3 y se había quedado fuera
+- `CarritoItem::subtotal`, para que ninguna vista multiplique
+- Excepciones de dominio `CarritoVacioException` y `ProductoNoAsignadoException`
+
+**Corregido**
+- La codificación de 4 vistas, que rompió el refactor de la Fase 3 y se fusionó sin detectar (`H-45`)
+- El RUC del proveedor pasa a ser único y de 11 dígitos: `numeric` aceptaba `5` y `-3` (`H-46`)
+- Borrar un proveedor con órdenes, o una categoría con productos, avisa en vez de reventar contra la clave foránea
+
+**Notas**
+- H-45 pasó las 60 comprobaciones de la Fase 3 porque todas preguntaban por el código de estado HTTP, y una página con la codificación destrozada responde 200. Una verificación solo cubre lo que pregunta
+- Verificado contra MySQL real: **164 comprobaciones, 0 fallos** — 40 de la fase y 124 de no-regresión de las fases 1-3. `php artisan test`: 25 pasan
+
+---
+
 ### Fase 3 — Paneles y roles — 2026-08-02
 
 **Seguridad**
@@ -115,6 +142,5 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 | Fase | Nombre | Estado |
 |---|---|---|
-| 4 | Separación de capas (MVC real) | ⬜ Pendiente |
 | 5 | Capa de presentación | ⬜ Pendiente |
 | 6 | Robustez y calidad | ⬜ Pendiente |

@@ -76,6 +76,17 @@ Reglas para que el proyecto no vuelva al estado descrito en `02-HALLAZGOS.md`. E
 - Los movimientos no se editan ni se borran: un error se corrige con otro
   movimiento, que deja su propio rastro
 
+## 4 ter. Reescrituras masivas de ficheros
+
+- **Nunca con `Get-Content` / `Set-Content` de PowerShell.** En Windows PowerShell 5.1
+  `Get-Content` asume la codepage del sistema cuando el fichero no lleva BOM. Los
+  ficheros del proyecto son UTF-8 sin BOM: leerlos así y reescribirlos como UTF-8
+  deja cada acento con doble codificación. Costó 4 vistas y llegó a `main` (H-45)
+- Para reescribir en bloque: las herramientas de edición, o Python leyendo y
+  escribiendo con `encoding='utf-8'` explícito
+- **Después de cualquier reescritura masiva, comprobar los caracteres, no solo que
+  la página cargue.** Una vista con la codificación rota responde `200`
+
 ## 5. Front-end
 
 - **Tailwind, únicamente.** Cero clases de Bootstrap (`container`, `card`, `btn`, `form-control`, `row`, `col-md-*`)
@@ -144,6 +155,8 @@ convierte el tablero en decoración.
 ## 8. Antes de dar una fase por terminada
 
 1. Se cumple el **criterio de aceptación** escrito en `03-ROADMAP.md` — verificado, no supuesto.
+   Y la verificación mira **el contenido**, no solo el código de estado: comprobar que
+   una pantalla responde `200` no dice nada sobre si lo que enseña está bien (H-45).
 2. `php artisan test` pasa.
 3. `php artisan pint` ejecutado.
 4. Los hallazgos cerrados se marcan en `02-HALLAZGOS.md`.
