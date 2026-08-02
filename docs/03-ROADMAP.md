@@ -11,7 +11,7 @@ Cada fase tiene **objetivo**, **alcance cerrado**, **checklist** y **criterio de
 |---|---|---|---|
 | 0 | Control de versiones y gestión | [#1](https://github.com/PeterAr29/supermercado-laravel/issues/1) ✅ | H-26 |
 | 1 | Seguridad e integridad de datos | [#2](https://github.com/PeterAr29/supermercado-laravel/issues/2) ✅ | H-01…H-07, H-28…H-33 |
-| 2 | Dominio unificado | [#3](https://github.com/PeterAr29/supermercado-laravel/issues/3) | H-08…H-11, H-25 |
+| 2 | Dominio unificado | [#3](https://github.com/PeterAr29/supermercado-laravel/issues/3) ✅ | H-08…H-11, H-25, H-36…H-38 |
 | **3** | **Paneles y roles** 🆕 | [#11](https://github.com/PeterAr29/supermercado-laravel/issues/11) | H-14, H-21, H-35 |
 | 4 | Separación de capas (MVC real) | [#4](https://github.com/PeterAr29/supermercado-laravel/issues/4) | H-12, H-13, H-19, H-20 |
 | 5 | Capa de presentación | [#5](https://github.com/PeterAr29/supermercado-laravel/issues/5) | H-15…H-18 |
@@ -131,7 +131,7 @@ pero ninguna migración la creaba — se había añadido a mano. La migración d
 
 ---
 
-## Fase 2 — Dominio unificado ⬜
+## Fase 2 — Dominio unificado ✅
 
 **Objetivo:** un solo vocabulario y un `User` conectado a sus compras.
 
@@ -160,8 +160,32 @@ pero ninguna migración la creaba — se había añadido a mano. La migración d
 - [ ] `unidad_medida` al `$fillable` de `Producto` (hoy `ProductoSeeder` la asigna fuera de él)
 - [ ] Timestamps en el pivot
 
-### Criterio de aceptación
-No queda ninguna referencia a `Order`/`OrderItem` (`grep -ri "OrderItem" app/ resources/ routes/` sin resultados). Un usuario autenticado compra, cierra sesión, vuelve a entrar y **su venta sigue asociada a él**. El badge del carrito muestra la cantidad correcta como invitado y como usuario.
+### Criterio de aceptación — ✅ cumplido
+No queda ninguna referencia a `Order`/`OrderItem`. Un usuario autenticado compra, cierra sesión, vuelve a entrar y **su venta sigue asociada a él**. El badge del carrito muestra la cantidad correcta como invitado y como usuario.
+
+**Verificado el 2026-08-02 contra MySQL real:**
+- Esquema: **11 comprobaciones, 0 fallos**
+- Dominio: **23 comprobaciones, 0 fallos** (carrito de invitado, fusión al iniciar sesión, venta asociada, relaciones, enums)
+- Vistas y enums: **11 comprobaciones, 0 fallos** (render HTTP 200 de las 5 vistas afectadas)
+- `php artisan test`: **25 pasan, 0 fallan**
+
+Los datos de prueba se crearon dentro de transacciones revertidas.
+
+### Hallazgos nuevos descubiertos durante la fase
+
+| ID | Qué era | Impacto real |
+|---|---|---|
+| H-36 | `eliminar()` no comprobaba de quién era la línea | Con solo conocer un id se le vaciaba el carrito a otra persona |
+| H-37 | El cast a enum rompió comparaciones y vistas | **Una orden se podía recibir dos veces**, duplicando stock; y las vistas daban error fatal |
+| H-38 | El select de unidad de medida nunca guardaba | Todo producto creado desde la app se quedaba en `und` aunque se eligiera `kg` |
+
+**Lectura de fondo:** H-37 repite el patrón de H-32 en la Fase 1. Añadir un cast
+(o un trait como `SoftDeletes`) **no es un cambio local**: obliga a revisar cada
+comparación y cada impresión del campo afectado. Recogido en `04-CONVENCIONES.md`.
+
+**Sobre H-36:** la Fase 1 miró *quién puede entrar* a cada ruta, no *sobre qué datos*
+puede actuar quien ya entró. Esa segunda pregunta es la que responde la Fase 3 con
+las Policies.
 
 ---
 

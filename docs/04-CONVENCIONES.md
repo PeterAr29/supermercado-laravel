@@ -48,6 +48,10 @@ Reglas para que el proyecto no vuelva al estado descrito en `02-HALLAZGOS.md`. E
 - Estados y unidades: **enum de PHP 8.1**, nunca strings sueltos con el catálogo en un comentario
 - Toda migración implementa `down()` de verdad (una migración sin `down()` no es reversible)
 - Los datos históricos no se borran: `SoftDeletes` en las entidades referenciadas por ventas
+- **Un cast nuevo no es un cambio local.** Al añadir un cast de enum, revisar *toda*
+  comparación (`=== 'texto'` deja de funcionar) y *toda* impresión en Blade
+  (`{{ $modelo->campo }}` sobre un enum es error fatal). Exponer el estado con
+  métodos del modelo (`estaPendiente()`) en vez de comparar enums en las vistas (H-37)
 - **Al activar `SoftDeletes` hay que revisar todas las relaciones que apuntan al modelo**, una por una:
   - **Documento histórico** (línea de venta, línea de orden) → `->withTrashed()`: debe resolver siempre
   - **Dato accesorio** (línea de carrito) → filtrar con `whereHas()`: debe desaparecer

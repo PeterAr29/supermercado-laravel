@@ -6,6 +6,31 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [No publicado]
 
+### Fase 2 — Dominio unificado — 2026-08-02
+
+**Cambiado**
+- `Order`/`OrderItem` pasan a `Venta`/`VentaItem`; tablas `orders`→`ventas`, `order_items`→`venta_items` (`H-09`)
+- Todos los importes son `decimal(10,2)` con casts `decimal:2` (`H-25`)
+- `estado` y `unidad_medida` pasan a enums de PHP 8.1 (`H-25`)
+
+**Añadido**
+- `ventas.user_id`: las compras ya saben a quién pertenecen (`H-10`)
+- El carrito persiste por usuario y el de invitado se fusiona al iniciar sesión (`H-11`)
+- Índices únicos en `proveedor_producto` y `carrito_items`, y timestamps en el pivot (`H-25`)
+- Relaciones que faltaban: `User::ventas()`, `User::carrito()`, `VentaItem::producto()`, `OrdenCompraItem::orden()`
+
+**Corregido**
+- El contador del carrito ya no muestra siempre 0 (`H-08`)
+- Solo se pueden borrar líneas del propio carrito (`H-36`)
+- Una orden ya no se puede recibir dos veces duplicando stock (`H-37`)
+- El select de unidad de medida por fin guarda lo que se elige (`H-38`)
+
+**Notas**
+- H-37 repite el patrón de H-32: añadir un cast o un trait no es un cambio local
+- Verificado contra MySQL real: 45 comprobaciones en tres bloques, 0 fallos. `php artisan test`: 25 pasan
+
+---
+
 ### Fase 1 — Seguridad e integridad de datos — 2026-08-01
 
 **Seguridad**
@@ -52,7 +77,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 | Fase | Nombre | Estado |
 |---|---|---|
-| 2 | Dominio unificado | ⬜ Pendiente |
-| 3 | Separación de capas (MVC real) | ⬜ Pendiente |
-| 4 | Capa de presentación | ⬜ Pendiente |
-| 5 | Robustez y calidad | ⬜ Pendiente |
+| 3 | Paneles y roles | ⬜ Pendiente |
+| 4 | Separación de capas (MVC real) | ⬜ Pendiente |
+| 5 | Capa de presentación | ⬜ Pendiente |
+| 6 | Robustez y calidad | ⬜ Pendiente |
