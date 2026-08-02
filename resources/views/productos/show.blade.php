@@ -1,0 +1,155 @@
+@extends('layouts.layout')
+
+@section('content')
+
+<div class="max-w-7xl mx-auto px-4 py-8">
+
+    {{-- ================== PRODUCTO PRINCIPAL ================== --}}
+    <div class="grid grid-cols-12 gap-8 bg-white rounded-xl shadow p-6">
+
+        {{-- IMAGEN --}}
+        <div class="col-span-12 md:col-span-5 flex justify-center">
+            <img
+                src="{{ $producto->imagen }}"
+                class="w-full max-w-md rounded-xl object-cover"
+                alt="{{ $producto->nombre }}"
+            >
+        </div>
+
+        {{-- INFO --}}
+        <div class="col-span-12 md:col-span-4">
+            <span class="text-sm text-gray-500 uppercase">
+                {{ $producto->categoria->nombre ?? 'Producto' }}
+            </span>
+
+            <h1 class="text-2xl font-bold mt-2">
+                {{ $producto->nombre }}
+            </h1>
+
+            {{-- PRECIO --}}
+            <div class="mt-4">
+                <span class="text-3xl font-bold text-red-600">
+                    S/ {{ number_format($producto->precio, 2) }}
+                </span>
+                <span class="text-gray-500 text-sm">
+                    x {{ $producto->unidad_medida === 'kg' ? 'Kg' : 'Und' }}
+                </span>
+            </div>
+
+            {{-- INPUT OPCIONAL --}}
+            <div class="mt-6">
+                <label class="font-semibold text-sm">
+                    ¿Qué debemos considerar al comprar este producto?
+                </label>
+                <textarea
+                    class="w-full border rounded-lg p-3 mt-2 focus:ring focus:ring-red-200"
+                    rows="3"
+                    placeholder="Ej: Tipo de corte, tamaño, color..."
+                ></textarea>
+            </div>
+
+            {{-- BOTÓN --}}
+            <form
+                action="{{ route('carrito.agregar', $producto->id) }}"
+                method="POST"
+                class="mt-6"
+            >
+                @csrf
+                <button
+                    class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-full transition"
+                >
+                    Agregar al carrito
+                </button>
+            </form>
+
+            {{-- CARACTERÍSTICAS --}}
+            <div class="mt-6">
+                <h3 class="font-semibold mb-2">Características</h3>
+
+                @if($producto->descripcion)
+                    <ul class="list-disc ml-5 text-gray-600 text-sm">
+                        <li>{{ $producto->descripcion }}</li>
+                    </ul>
+                @else
+                    <p class="text-sm text-gray-500">
+                        No hay descripción disponible para este producto.
+                    </p>
+                @endif
+            </div>
+        </div>
+
+        {{-- PANEL LATERAL --}}
+        <div class="col-span-12 md:col-span-3 space-y-4">
+
+            <div class="bg-gray-50 rounded-xl p-4">
+                <h4 class="font-semibold">Vendido y despachado por</h4>
+                <p class="text-gray-600">{{ config('app.name') }}</p>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl p-4">
+                <h4 class="font-semibold">Proveedores</h4>
+
+                @if(!empty($proveedores) && count($proveedores))
+                    <ul class="mt-2 space-y-1 text-sm text-gray-600">
+                        @foreach($proveedores as $proveedor)
+                            <li>• {{ $proveedor['proveedor_nombre'] }}</li>
+                        @endforeach
+                    </ul>
+                @else
+                    <p class="text-sm text-gray-500 mt-2">
+                        No hay proveedores disponibles
+                    </p>
+                @endif
+            </div>
+
+            <div class="bg-gray-50 rounded-xl p-4">
+                <h4 class="font-semibold">Entrega</h4>
+                <p class="text-gray-600">Delivery disponible</p>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl p-4">
+                <h4 class="font-semibold">Métodos de pago</h4>
+                <p class="text-gray-600">Tarjeta • Yape</p>
+            </div>
+
+        </div>
+    </div>
+
+    {{-- ================== PRODUCTOS SIMILARES ================== --}}
+    @if(isset($productosSimilares) && count($productosSimilares))
+        <div class="mt-12">
+            <h2 class="text-xl font-bold mb-6">Productos similares</h2>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+                @foreach($productosSimilares as $item)
+                    <div class="bg-white rounded-xl shadow hover:shadow-lg transition p-4">
+
+                        <img
+                            src="{{ $item->imagen }}"
+                            class="w-full h-40 object-cover rounded-lg"
+                            alt="{{ $item->nombre }}"
+                        >
+
+                        <h3 class="font-semibold mt-3 text-sm">
+                            {{ $item->nombre }}
+                        </h3>
+
+                        <p class="text-red-600 font-bold mt-1">
+                            S/ {{ number_format($item->precio, 2) }}
+                        </p>
+
+                        <a
+                            href="{{ route('productos.show', $item->id) }}"
+                            class="block text-center mt-3 text-sm text-white bg-red-600 hover:bg-red-700 py-2 rounded-lg"
+                        >
+                            Ver producto
+                        </a>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+</div>
+
+@endsection
