@@ -246,6 +246,21 @@ las Policies.
 Los datos de prueba se crearon dentro de transacciones revertidas.
 `php artisan test`: **25 pasan, 0 fallan**.
 
+### Lo que quedó fuera
+
+El criterio de aceptación se cumple entero, pero **dos casillas del alcance no**.
+Se dejan sin marcar en la issue #11 en vez de darlas por buenas:
+
+| Sin hacer | Estado real |
+|---|---|
+| Gestión de **categorías** desde el panel | Hay CRUD de productos y proveedores, pero no existe `CategoriaController`: las categorías solo se crean con `CategoriaSeeder` |
+| **Dirección** en `/mi-cuenta` | La pantalla muestra nombre, correo, tipo de cuenta, pedidos y total gastado; `users` no tiene columna de dirección |
+
+Ninguna bloquea el criterio, y por eso la fase se cierra. La dirección del cliente
+tendrá que decidirse junto con el envío —hoy el pago es simulado y no hay entrega
+que direccionar—, así que va al backlog. La gestión de categorías es un CRUD más
+del panel y **entra en la Fase 4**, que ya toca esa capa.
+
 ### Hallazgos nuevos descubiertos durante la fase
 
 | ID | Qué era | Impacto real |
@@ -293,6 +308,11 @@ tirado. La Fase 4 construirá `CheckoutService` y `OrdenCompraService` encima.
 - [ ] `Route::resource` para órdenes de compra
 - [ ] La ruta AJAX pasa a `routes/api.php` o a un prefijo `ajax/` con nombre
 - [ ] Route model binding en **todos** los métodos (`show(Producto $producto)`)
+- [ ] Todo `Route::resource` con nombre en español declara `parameters()` *(H-44)*
+
+**Bloque D — Lo que arrastra la Fase 3**
+- [ ] **Gestión de categorías** en `/admin`: era alcance de la Fase 3 y no se hizo.
+      Hoy solo existen las que crea `CategoriaSeeder`
 
 ### Criterio de aceptación
 Ningún controlador supera **15 líneas por método**. `grep -rn "validate(" app/Http/Controllers/` no devuelve nada. El total del carrito se calcula en **un solo lugar**, y el stock se modifica **solo** desde `InventarioService`.
@@ -353,3 +373,6 @@ Ideas válidas que **no** entran en estas fases, para no dispersar el trabajo:
 - API REST para app móvil (`routes/api.php` está vacío)
 - Gestión de ofertas y promociones (el carrusel del home es una imagen fija)
 - Alertas de stock mínimo por correo
+- **Dirección del cliente en `/mi-cuenta`** — era alcance de la Fase 3 y no se hizo.
+  Sale del roadmap porque no se decide sola: sin entrega ni pago real, una dirección
+  es un campo que nadie lee. Vuelve cuando entre el envío

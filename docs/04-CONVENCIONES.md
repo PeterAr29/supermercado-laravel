@@ -109,13 +109,23 @@ Tipos: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`.
 Ciclo de una fase:
 
 ```bash
-git switch -c fase-1-seguridad     # 1. rama de la fase
+git switch -c fase-1-seguridad      # 1. rama de la fase
 # ...trabajar, commit por cada hallazgo cerrado...
 git push -u origin fase-1-seguridad # 2. subir la rama
-gh pr create --fill                 # 3. Pull Request (deja constancia del alcance)
+gh pr create --body "... Closes #2"  # 3. PR con el alcance Y la palabra clave
 gh pr merge --squash --delete-branch # 4. fusionar al cerrar la fase
 git switch main && git pull          # 5. actualizar local
 ```
+
+**El PR lleva `Closes #N` en el cuerpo.** Sin esa palabra clave —`Closes`, `Fixes`
+o `Resolves`— fusionar **no cierra la issue**: mencionar «Issue #N» solo crea una
+referencia. Las fases 2 y 3 se fusionaron sin ella y sus issues se quedaron
+abiertas.
+
+**Las casillas de la issue no se marcan solas.** Ningún merge las toca: son
+markdown del cuerpo. Se repasan a mano al cerrar la fase, y **la que no se hizo
+se deja sin marcar con una nota que diga por qué** — una casilla marcada de más
+convierte el tablero en decoración.
 
 **Nunca se commitea directamente en `main`** salvo correcciones de documentación.
 
@@ -138,3 +148,7 @@ git switch main && git pull          # 5. actualizar local
 3. `php artisan pint` ejecutado.
 4. Los hallazgos cerrados se marcan en `02-HALLAZGOS.md`.
 5. Hallazgos nuevos descubiertos por el camino: **se anotan, no se arreglan** en la fase en curso.
+6. **Repasar la checklist de la issue una por una** y marcar solo lo hecho. Lo que
+   quede sin marcar se explica en un comentario de cierre: si no bloquea el criterio
+   de aceptación la fase se cierra igual, pero el hueco queda escrito y con dueño.
+7. La tarjeta del tablero se mueve a `Done`.
