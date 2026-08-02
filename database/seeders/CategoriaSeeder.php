@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Categoria;
+use Illuminate\Database\Seeder;
 
 class CategoriaSeeder extends Seeder
 {
@@ -18,11 +17,14 @@ class CategoriaSeeder extends Seeder
             'Snacks',
             'Licores',
             'Mascotas',
-            'Bebidas'
+            'Bebidas',
         ];
 
+        // firstOrCreate para poder re-sembrar sin duplicar
         foreach ($categorias as $nombre) {
-            Categoria::create(['nombre' => $nombre]);
+            Categoria::firstOrCreate(['nombre' => $nombre]);
         }
+
+        $this->command->info('Categorías: '.Categoria::count().'.');
     }
 }
