@@ -134,7 +134,12 @@ Tipos: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`.
 
 ### Remoto
 
-`origin` → https://github.com/PeterAr29/supermercado-laravel (**privado**)
+`origin` → https://github.com/PeterAr29/supermercado-laravel (**público** desde el 2026-08-02)
+
+Al abrirlo se comprobó que el historial no arrastraba nada que no debiera verse:
+`.env` nunca se commiteó, los `backup_*.sql` tampoco, y de `storage/logs` solo está
+el `.gitignore` de Laravel. **Esa comprobación va antes de abrir un repositorio, no
+después**: hacerlo público expone todo el historial, no el estado actual.
 
 Ciclo de una fase:
 
