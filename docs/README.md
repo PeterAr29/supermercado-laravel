@@ -33,6 +33,8 @@ Para evitar dos listas que se contradigan, el reparto es estricto:
 
 ## Estado actual
 
-- **Última fase cerrada:** 2 — Dominio unificado ✅ ([#3](https://github.com/PeterAr29/supermercado-laravel/issues/3))
-- **Siguiente:** 3 — Paneles y roles ([#11](https://github.com/PeterAr29/supermercado-laravel/issues/11))
+- **Última fase cerrada:** 6 — Robustez y calidad ✅ ([#6](https://github.com/PeterAr29/supermercado-laravel/issues/6))
+- **Siguiente:** ninguna. **El roadmap está completo**: las fases 0 a 6 están cerradas.
+- Queda abierto **H-27** (carpeta anidada y `package-lock.json` huérfano, [#7](https://github.com/PeterAr29/supermercado-laravel/issues/7)): no es una fase, es una decisión del responsable.
+- Lo que venga ahora sale del **backlog** de `03-ROADMAP.md`, y lo primero es decidir qué entra y en qué orden.
 - **Roadmap replanteado el 2026-08-01:** se retira Google Sheets y se inserta la Fase 3 — Paneles y roles ([#11](https://github.com/PeterAr29/supermercado-laravel/issues/11)). Las fases 3-5 antiguas pasan a 4-6.

@@ -6,6 +6,27 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [No publicado]
 
+### Fase 6 — Robustez y calidad — 2026-08-02
+
+**Añadido**
+- **24 tests de feature del dominio** (`H-24`). Había 25, todos de Breeze: carrito, checkout, órdenes de compra y control de acceso no tenían ninguno. Ahora 49
+- **Factories** de `Categoria`, `Producto` y `Proveedor` (`H-23`), con estados que nombran el caso: `sinStock()`, `conStock(3)`, `bajoMinimo()`, `retirado()`, `inactivo()`. `UserFactory` gana `admin()` y `cliente()`
+- **`php artisan db:respaldo --fase=N`** (`H-34`). El paso 0 de cada fase era una línea de `mysqldump` copiada a mano de la documentación. Se niega a pisar un volcado existente sin `--forzar`, y la contraseña viaja por `MYSQL_PWD` en vez de por la línea de comandos
+
+**Cambiado**
+- **El catálogo de la tienda pagina** de 12 en 12 (`H-22`), conservando buscador y filtro al cambiar de página. El panel ya paginaba desde la Fase 4; la tienda, que es la parte con miles de SKU, seguía trayéndolo todo con `->get()`
+
+**Corregido**
+- `04-CONVENCIONES.md` pedía `php artisan pint` como paso de cierre de fase desde la Fase 0. Ese comando no existe —Pint es un binario, `./vendor/bin/pint`—, así que el paso llevaba seis fases sin poder ejecutarse tal y como estaba escrito
+
+**Notas**
+- Media checklist de la fase ya estaba hecha sin que el roadmap lo supiera: la paginación del panel llegó con la Fase 4 y `DatabaseSeeder` se completó al repoblar el catálogo tras H-33. Ambas cosas se arreglaron **de paso**, en fases de otro alcance, y nadie volvió a tocar el roadmap
+- `migrate:fresh --seed` se verificó contra `laravel_testing`, no contra la base de desarrollo: mismas migraciones y mismos seeders, sin arriesgar los datos. Deja 2 usuarios, 8 categorías, 40 productos, 6 proveedores y el kardex de apertura
+- Verificado: `php artisan test` **49 pasan, 128 aserciones, 0 fallos**. `./vendor/bin/pint --test`: 163 archivos limpios
+- **Con esta fase el roadmap queda completo.** Lo siguiente sale del backlog, y eso es una decisión, no una tarea
+
+---
+
 ### Fase 5 — Capa de presentación — 2026-08-02
 
 **Cambiado**
@@ -167,6 +188,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## Fases pendientes
 
-| Fase | Nombre | Estado |
-|---|---|---|
-| 6 | Robustez y calidad | ⬜ Pendiente |
+Ninguna. Las fases 0 a 6 del [roadmap](docs/03-ROADMAP.md) están cerradas.
+
+Queda abierto **H-27** —la carpeta anidada y el `package-lock.json` huérfano de la
+raíz externa—, que no es una fase sino una decisión pendiente del responsable. Lo
+demás sale del backlog, al final del roadmap.

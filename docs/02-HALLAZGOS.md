@@ -27,9 +27,9 @@ Auditoría del 2026-08-01 sobre `routes/`, 8 controladores de dominio, 10 modelo
 | H-19 | 🟡 | Rutas | Rutas duplicadas y sin agrupar en `web.php` | 4 |
 | H-20 | 🟡 | Capas | Route model binding inconsistente | 4 |
 | H-21 | 🟡 | Arquitectura | Google Sheets: tercera fuente de proveedores, se retira | 3 ✅ |
-| H-22 | 🟢 | Rendimiento | Sin paginación en productos ni proveedores | 6 |
-| H-23 | 🟢 | Datos | `DatabaseSeeder` vacío; sin factories de dominio | 6 |
-| H-24 | 🟢 | Calidad | Sin tests de dominio | 6 |
+| H-22 | 🟢 | Rendimiento | Sin paginación en productos ni proveedores | 6 ✅ |
+| H-23 | 🟢 | Datos | `DatabaseSeeder` vacío; sin factories de dominio | 6 ✅ |
+| H-24 | 🟢 | Calidad | Sin tests de dominio | 6 ✅ |
 | H-25 | 🟡 | Esquema | Inconsistencias de tipos, casts, índices y enums | 2 ✅ |
 | H-26 | 🟠 | Gestión | Sin control de versiones | 0 ✅ |
 | H-27 | 🟢 | Gestión | Carpeta anidada y `package-lock.json` huérfano | 0 |
@@ -39,7 +39,7 @@ Auditoría del 2026-08-01 sobre `routes/`, 8 controladores de dominio, 10 modelo
 | H-31 | 🟠 | Bug | Las rutas de perfil de Breeze nunca se registraron | 1 ✅ |
 | H-32 | 🔴 | Bug | Un producto retirado rompía órdenes y falseaba el carrito | 1 ✅ |
 | H-33 | 🔴 | Datos | `php artisan test` borraba la base de datos de desarrollo | 1 ✅ |
-| H-34 | 🟠 | Gestión | Sin copia de seguridad de la base antes de cada fase | 6 |
+| H-34 | 🟠 | Gestión | Sin copia de seguridad de la base antes de cada fase | 6 ✅ |
 | H-35 | 🔴 | Dominio | Las ventas no descuentan stock | 3 ✅ |
 | H-36 | 🔴 | Seguridad | Se podía borrar la línea de carrito de cualquiera | 2 ✅ |
 | H-37 | 🟠 | Bug | El cast a enum rompió comparaciones y vistas | 2 ✅ |
@@ -352,7 +352,7 @@ Se pueden vender 50 unidades y el stock sigue intacto. Tampoco se comprueba que 
 **Arreglo (Fase 3):** la venta descuenta stock dentro de la misma transacción, valida disponibilidad antes de confirmar, y registra el movimiento en `movimientos_inventario`.
 
 ### H-34 — Sin copia de seguridad de la base antes de cada fase
-**Abierto.** *(Asignado a la Fase 6.)*
+**Resuelto en la Fase 6.**
 
 Git protege el **código**, pero los **datos** de desarrollo no están versionados ni respaldados. H-33 lo dejó claro del peor modo posible: los productos se perdieron sin posibilidad de recuperación.
 
@@ -364,7 +364,18 @@ Dos medidas pendientes:
    ```
 2. **Seeders que reconstruyan un catálogo de trabajo** (`ProductoSeeder`, `ProveedorSeeder`) para que perder la base de desarrollo sea una molestia, no un desastre. Ya estaba previsto en H-23.
 
-Hasta entonces, el volcado manual es obligatorio antes de empezar cualquier fase.
+**Arreglo:** las dos, y la primera automatizada.
+
+`php artisan db:respaldo --fase=N` deja `backup_pre_fase_N.sql` en la raíz. Toma host, puerto, base y usuario de la conexión activa, así que no hay nada que copiar a mano —que era justamente el paso que se olvidaba—. Detalles que no son cosméticos:
+
+- **Se niega a sobrescribir** un volcado existente salvo con `--forzar`. Un respaldo pisado por error es un respaldo que no existe.
+- **La contraseña va por `MYSQL_PWD`**, no como argumento: en la línea de comandos la vería cualquiera que liste los procesos.
+- **Se niega a correr si la conexión activa no es MySQL**, en vez de generar un fichero vacío que parece un respaldo.
+- La ruta de `mysqldump` sale de `DB_DUMP_BINARIO`; si no está, se prueban XAMPP y el PATH.
+
+`.gitignore` excluye `backup_*.sql`: son datos, y Git versiona código.
+
+La segunda medida ya está: `migrate:fresh --seed` reconstruye 2 usuarios, 8 categorías, 40 productos, 6 proveedores y el kardex de apertura.
 
 ### H-33 — `php artisan test` borraba la base de datos de desarrollo
 **Detectado en la revisión del PR de la Fase 1, después de haber destruido datos.**
@@ -596,13 +607,35 @@ Problemas técnicos que esto elimina de paso:
 - El controlador hace `abort(500)` si Google falla: una dependencia externa tumba una página propia
 
 ### H-22 — Sin paginación
+**Resuelto en la Fase 6.**
+
 `ProductoController::index` y `ProveedorController::index` usan `->get()`. Con catálogo real (miles de SKU) la página se cae — el log ya registra dos `Allowed memory size exhausted`.
 
+**Arreglo:** el panel ya paginaba desde la Fase 4 (productos, proveedores, órdenes, inventario y kardex). Lo que seguía trayendo el catálogo entero era la **tienda**: `Tienda\ProductoController::index` y `porCategoria`, ahora de 12 en 12 con `withQueryString()` para que el buscador y el filtro sobrevivan al cambio de página.
+
+**Cuidado con dar esto por hecho mirando el controlador.** Paginar sin `{{ $productos->links() }}` en la vista deja la página 2 inalcanzable, y la pantalla responde `200` igual. `CatalogoTest` afirma que el enlace **aparece en el HTML**.
+
 ### H-23 — Seeders y factories ausentes
+**Resuelto en la Fase 6.**
+
 `DatabaseSeeder::run()` está vacío y **no invoca a `CategoriaSeeder`**, que sí existe y funciona. `php artisan migrate --seed` deja la base sin categorías, y sin categorías el filtro lateral y el alta de productos quedan inutilizables. No hay factories de `Producto`, `Proveedor` ni `Categoria`.
 
+**Arreglo:** los seeders se rehicieron al repoblar el catálogo tras H-33, y `DatabaseSeeder` los encadena en el orden que exigen las claves foráneas. Esta fase añade `CategoriaFactory`, `ProductoFactory` y `ProveedorFactory` —con `HasFactory` en los tres modelos, que no lo tenían— y estados que nombran los casos que importan: `sinStock()`, `conStock()`, `bajoMinimo()`, `retirado()`, `inactivo()`. `UserFactory` gana `admin()` y `cliente()`: sin ellos no se puede probar la mitad de H-14.
+
 ### H-24 — Sin tests de dominio
+**Resuelto en la Fase 6.**
+
 Solo están los de Breeze (auth y perfil). Cero cobertura de carrito, checkout, órdenes de compra y recepción de stock — justamente donde están H-03, H-04 y H-06.
+
+**Arreglo:** 24 tests nuevos en cuatro archivos, escritos sobre los fallos que el proyecto ya pagó una vez:
+
+| Archivo | Cubre |
+|---|---|
+| `Feature/Tienda/CarritoTest` | agregar, sumar unidades, producto retirado (H-41), aviso de stock, carrito ajeno (H-36) |
+| `Feature/Tienda/CheckoutTest` | descuento de stock y movimiento (H-35), venta asociada (H-10), carrito vacío, stock agotado entre medias |
+| `Feature/Tienda/CatalogoTest` | paginación y filtros (H-22) |
+| `Feature/Admin/OrdenCompraTest` | total desde el precio del pivot (H-04), recepción y movimiento (H-35), doble recepción (H-37), producto ajeno al proveedor |
+| `Feature/Admin/AccesoPanelTest` | invitado sin acceso de escritura (H-01), cliente fuera de `/admin` (H-14), registro que nunca crea administradores |
 
 ### H-27 — Restos de andamiaje
 - Carpeta anidada: la app real está en `supermercado_laravel/supermercado_laravel/`

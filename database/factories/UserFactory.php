@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\RolUsuario;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -29,7 +30,26 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            // Por defecto, cliente. Quien se registra en la tienda no gestiona
+            // nada (H-14), y el administrador se pide explícitamente.
+            'rol' => RolUsuario::Cliente,
         ];
+    }
+
+    /** Gestiona la tienda: es quien puede entrar en /admin. */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'rol' => RolUsuario::Admin,
+        ]);
+    }
+
+    /** Compra en la tienda y nada más. Explícito cuando la prueba va de eso. */
+    public function cliente(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'rol' => RolUsuario::Cliente,
+        ]);
     }
 
     /**

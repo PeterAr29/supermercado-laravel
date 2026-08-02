@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Categoria extends Model
 {
+    use HasFactory;
+
     // Explícito por convención: Eloquent pluraliza en inglés y aquí acierta de
     // casualidad. Dejarlo al automatismo costó que el CRUD de proveedores no
     // funcionara nunca (H-29).
