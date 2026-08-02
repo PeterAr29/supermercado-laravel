@@ -23,11 +23,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 - `OrdenCompraItem` deja de escribir timestamps que su tabla no tiene (`H-30`)
 - Registradas las rutas de perfil de Breeze: `/profile` devolvía 404 (`H-31`)
 - Un producto retirado ya no rompe la recepción de órdenes ni deja pagar S/ 0 en el carrito (`H-32`)
+- La suite de tests apunta a una base aparte (`laravel_testing`): antes borraba la base de desarrollo en cada ejecución (`H-33`)
 
 **Notas**
 - H-29 y H-30 revelan que el módulo de proveedores y órdenes de compra nunca llegó a ejecutarse
 - La columna `stock` existía en la base de desarrollo sin migración que la creara; la migración de H-03 reconcilia ambos casos
 - Verificado contra MySQL real: 22 comprobaciones, 0 fallos. `php artisan test`: 25 pasan (antes 5 rojos)
+- ⚠️ H-33 se detectó tarde: la suite ya había destruido los ~43 productos y los usuarios de la base de desarrollo, sin copia de seguridad posible. Las categorías se regeneraron con `CategoriaSeeder`. Medidas preventivas en H-34
 
 ---
 

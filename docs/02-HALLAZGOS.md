@@ -38,6 +38,8 @@ Auditoría del 2026-08-01 sobre `routes/`, 8 controladores de dominio, 10 modelo
 | H-30 | 🔴 | Bug | `OrdenCompraItem` escribe timestamps que su tabla no tiene | 1 |
 | H-31 | 🟠 | Bug | Las rutas de perfil de Breeze nunca se registraron | 1 |
 | H-32 | 🔴 | Bug | Un producto retirado rompía órdenes y falseaba el carrito | 1 |
+| H-33 | 🔴 | Datos | `php artisan test` borraba la base de datos de desarrollo | 1 |
+| H-34 | 🟠 | Gestión | Sin copia de seguridad de la base antes de cada fase | 5 |
 
 ---
 
@@ -95,6 +97,52 @@ Es el peor tipo de bug: valida, guarda, redirige con "creado correctamente" y pi
 `DB::beginTransaction()` sin `try/catch`. Si el `foreach` falla a mitad (producto inexistente, pivot nulo — muy probable dado H-04), queda una orden huérfana con total 0 y la transacción sin cerrar.
 
 **Arreglo:** `DB::transaction(function () { ... })` con closure.
+
+### H-34 — Sin copia de seguridad de la base antes de cada fase
+**Abierto.** *(Asignado a la Fase 5.)*
+
+Git protege el **código**, pero los **datos** de desarrollo no están versionados ni respaldados. H-33 lo dejó claro del peor modo posible: los productos se perdieron sin posibilidad de recuperación.
+
+Dos medidas pendientes:
+
+1. **Volcado previo a cada fase**, como paso 0 del procedimiento:
+   ```
+   C:/xampp/mysql/bin/mysqldump.exe -u root laravel > backup_pre_fase_N.sql
+   ```
+2. **Seeders que reconstruyan un catálogo de trabajo** (`ProductoSeeder`, `ProveedorSeeder`) para que perder la base de desarrollo sea una molestia, no un desastre. Ya estaba previsto en H-23.
+
+Hasta entonces, el volcado manual es obligatorio antes de empezar cualquier fase.
+
+### H-33 — `php artisan test` borraba la base de datos de desarrollo
+**Detectado en la revisión del PR de la Fase 1, después de haber destruido datos.**
+
+**Dónde:** `phpunit.xml:24-25`
+
+Las dos líneas que aíslan la base de tests venían **comentadas** desde la instalación de Laravel:
+
+```xml
+<!-- <env name="DB_CONNECTION" value="sqlite"/> -->
+<!-- <env name="DB_DATABASE" value=":memory:"/> -->
+```
+
+Sin ellas, PHPUnit hereda el `.env` y apunta a la base de **desarrollo**. Todos los tests de Breeze usan el trait `RefreshDatabase`, que ejecuta `migrate:fresh` — es decir, **DROP de todas las tablas** — al arrancar la suite.
+
+Resultado: **cada `php artisan test` destruía todos los datos de desarrollo**, en silencio y sin aviso.
+
+**Daño real:** durante la verificación de esta fase se ejecutó la suite varias veces. Se perdieron los ~43 productos y los usuarios de la base `laravel`. No había binlogs (XAMPP los trae desactivados) ni copias de seguridad, así que **no fue posible recuperarlos**. Las 8 categorías sí, porque `CategoriaSeeder` las regenera.
+
+**Arreglo:** `phpunit.xml` apunta a una base MySQL aparte, `laravel_testing`.
+
+Se descartó SQLite en memoria (más rápido) porque la migración `restrict_producto_deletion_on_item_tables` usa `dropForeign()`, que el driver de SQLite no soporta.
+
+Requiere crear la base una vez:
+```sql
+CREATE DATABASE laravel_testing CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+**Verificado:** tras el arreglo, `php artisan test` crea 15 tablas en `laravel_testing` y la base `laravel` conserva sus datos intactos.
+
+**Prevención:** antes de ejecutar una suite por primera vez en un proyecto, comprobar a qué base apunta. Añadido a `04-CONVENCIONES.md`. La copia de seguridad previa a cualquier fase debería ser parte del procedimiento — se recoge en H-34.
 
 ### H-32 — Un producto retirado rompía órdenes y falseaba el carrito
 **Detectado en la revisión del PR de la Fase 1.** *(Regresión introducida por el propio H-02; resuelta antes de fusionar.)*

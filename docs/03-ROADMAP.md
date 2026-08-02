@@ -10,7 +10,7 @@ Cada fase tiene **objetivo**, **alcance cerrado**, **checklist** y **criterio de
 | Fase | Nombre | Issue | Hallazgos que cierra |
 |---|---|---|---|
 | 0 | Control de versiones y gestión | [#1](https://github.com/PeterAr29/supermercado-laravel/issues/1) ✅ | H-26 |
-| 1 | Seguridad e integridad de datos | [#2](https://github.com/PeterAr29/supermercado-laravel/issues/2) ✅ | H-01…H-07, H-28…H-32 |
+| 1 | Seguridad e integridad de datos | [#2](https://github.com/PeterAr29/supermercado-laravel/issues/2) ✅ | H-01…H-07, H-28…H-33 |
 | 2 | Dominio unificado | [#3](https://github.com/PeterAr29/supermercado-laravel/issues/3) | H-08…H-11, H-25 |
 | 3 | Separación de capas (MVC real) | [#4](https://github.com/PeterAr29/supermercado-laravel/issues/4) | H-12, H-13, H-14, H-19, H-20 |
 | 4 | Capa de presentación | [#5](https://github.com/PeterAr29/supermercado-laravel/issues/5) | H-15…H-18 |
@@ -99,8 +99,8 @@ Los datos de prueba se crearon dentro de una transacción revertida, sin dejar r
 
 ### Hallazgos nuevos descubiertos durante la fase
 
-Los cinco bloqueaban criterios de aceptación o eran regresiones de esta misma fase,
-así que se resolvieron aquí en lugar de aplazarse. Detalle completo en `02-HALLAZGOS.md`.
+Los seis bloqueaban criterios de aceptación, eran regresiones de esta misma fase o
+impedían trabajar con seguridad, así que se resolvieron aquí. Detalle en `02-HALLAZGOS.md`.
 
 | ID | Qué era | Impacto real |
 |---|---|---|
@@ -109,6 +109,7 @@ así que se resolvieron aquí en lugar de aplazarse. Detalle completo en `02-HAL
 | H-30 | `OrdenCompraItem` escribía timestamps inexistentes | Crear órdenes de compra fallaba siempre |
 | H-31 | Rutas de perfil de Breeze sin registrar | `/profile` daba 404; 5 tests en rojo |
 | H-32 | Producto retirado rompía órdenes y falseaba el carrito | Regresión del propio H-02, detectada en la revisión del PR |
+| H-33 | `php artisan test` apuntaba a la base de desarrollo | **Destruyó los datos de desarrollo antes de detectarse.** Ver H-34 |
 
 **Lectura de fondo:** H-29 y H-30 demuestran que el módulo de proveedores y órdenes
 de compra **jamás llegó a ejecutarse**. Los desajustes de H-04 y H-05 no se habían

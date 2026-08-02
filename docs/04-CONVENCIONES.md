@@ -99,7 +99,17 @@ git switch main && git pull          # 5. actualizar local
 
 **Nunca se sube el `.env`.** Si se añade una variable nueva, se documenta en `.env.example` (ese sí se versiona) sin su valor real.
 
-## 7. Antes de dar una fase por terminada
+## 7. Antes de EMPEZAR una fase
+
+1. **Volcado de la base de desarrollo.** Git versiona el código, no los datos:
+   ```
+   C:/xampp/mysql/bin/mysqldump.exe -u root laravel > backup_pre_fase_N.sql
+   ```
+2. **Comprobar a qué base apunta la suite de tests** (`phpunit.xml`) antes de ejecutarla
+   por primera vez. `RefreshDatabase` hace `migrate:fresh`: si apunta a la base de
+   desarrollo, la borra entera sin avisar (H-33).
+
+## 8. Antes de dar una fase por terminada
 
 1. Se cumple el **criterio de aceptación** escrito en `03-ROADMAP.md` — verificado, no supuesto.
 2. `php artisan test` pasa.
