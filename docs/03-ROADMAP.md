@@ -4,7 +4,7 @@ Cada fase tiene **objetivo**, **alcance cerrado**, **checklist** y **criterio de
 
 | Fase | Nombre | Estado | Hallazgos que cierra |
 |---|---|---|---|
-| 0 | Control de versiones y gestión | 🟡 En curso | H-26, H-27 |
+| 0 | Control de versiones y gestión | ✅ Completada | H-26 (H-27 parcial) |
 | 1 | Seguridad e integridad de datos | ⬜ Pendiente | H-01…H-07 |
 | 2 | Dominio unificado | ⬜ Pendiente | H-08…H-11, H-25 |
 | 3 | Separación de capas (MVC real) | ⬜ Pendiente | H-12, H-13, H-14, H-19, H-20 |
@@ -15,7 +15,7 @@ Leyenda: ⬜ Pendiente · 🟡 En curso · ✅ Completada
 
 ---
 
-## Fase 0 — Control de versiones y gestión 🟡
+## Fase 0 — Control de versiones y gestión ✅
 
 **Objetivo:** poder trabajar sin miedo. Ningún refactor es seguro sin historial.
 
@@ -26,13 +26,20 @@ Leyenda: ⬜ Pendiente · 🟡 En curso · ✅ Completada
 - [x] Documentación de contexto → `01-CONTEXTO.md`
 - [x] Roadmap por fases → este documento
 - [x] Convenciones de trabajo → `04-CONVENCIONES.md`
-- [ ] `git init` + commit inicial con el estado actual íntegro
-- [ ] Verificar que `.gitignore` excluye `.env`, `/vendor`, `/node_modules`, `/storage/logs`
-- [ ] `CHANGELOG.md` en la raíz
-- [ ] Decidir qué hacer con la carpeta anidada y el `package-lock.json` huérfano (H-27)
+- [x] `git init` + commit inicial con el estado actual íntegro (191 archivos, rama `main`)
+- [x] Verificar que `.gitignore` excluye `.env`, `/vendor`, `/node_modules`, `/storage/logs`
+- [x] `CHANGELOG.md` en la raíz
+- [ ] Decidir qué hacer con la carpeta anidada y el `package-lock.json` huérfano (H-27) — *requiere decisión del responsable*
 
-### Criterio de aceptación
+### Criterio de aceptación — ✅ cumplido
 `git log` muestra el commit inicial, `git status` sale limpio y `git check-ignore .env` confirma que el `.env` no está versionado.
+
+**Verificado el 2026-08-01:**
+```
+43259e4 docs(gestion): añade gestion del proyecto por fases (H-26)
+08f2130 chore: commit inicial del estado actual del proyecto
+```
+`git status` limpio. `git check-ignore -v` confirma exclusión de `.env`, `vendor`, `node_modules` y `storage/logs/laravel.log`.
 
 ---
 

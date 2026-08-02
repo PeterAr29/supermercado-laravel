@@ -20,6 +20,8 @@ Documentación de gestión, no de código. Aquí se decide **qué se hace, en qu
 
 ## Estado actual
 
-- **Fase en curso:** 0 — Control de versiones y gestión
-- **Siguiente:** 1 — Seguridad e integridad de datos
+- **Última fase cerrada:** 0 — Control de versiones y gestión ✅
+- **Siguiente:** 1 — Seguridad e integridad de datos (cierra `H-01`…`H-07`)
 - **Ver progreso:** [03-ROADMAP.md](03-ROADMAP.md)
+
+> El roadmap es la **única** fuente de verdad del progreso. No duplicar el seguimiento en otros sitios.
