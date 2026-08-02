@@ -1,0 +1,48 @@
+{
+    "Showing": "Mostrando",
+    "to": "a",
+    "of": "de",
+    "results": "resultados",
+    "Pagination Navigation": "Navegación entre páginas",
+
+    "Email": "Correo electrónico",
+    "Password": "Contraseña",
+    "Confirm Password": "Confirmar contraseña",
+    "Current Password": "Contraseña actual",
+    "New Password": "Contraseña nueva",
+    "Name": "Nombre",
+    "Remember me": "Recuérdame",
+    "Log in": "Entrar",
+    "Log Out": "Cerrar sesión",
+    "Register": "Crear cuenta",
+    "Already registered?": "¿Ya tienes cuenta?",
+    "Forgot your password?": "¿Olvidaste la contraseña?",
+    "Reset Password": "Restablecer la contraseña",
+    "Email Password Reset Link": "Enviarme el enlace",
+    "Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.": "¿Olvidaste la contraseña? No pasa nada. Dinos tu correo electrónico y te enviaremos un enlace para elegir una nueva.",
+    "This is a secure area of the application. Please confirm your password before continuing.": "Esta es una zona protegida. Confirma tu contraseña antes de continuar.",
+    "Confirm": "Confirmar",
+
+    "Your email address is unverified.": "Tu correo electrónico está sin verificar.",
+    "Click here to re-send the verification email.": "Pulsa aquí para reenviar el correo de verificación.",
+    "Resend Verification Email": "Reenviar el correo de verificación",
+    "A new verification link has been sent to your email address.": "Te hemos enviado un enlace de verificación nuevo a tu correo electrónico.",
+    "A new verification link has been sent to the email address you provided during registration.": "Te hemos enviado un enlace de verificación nuevo al correo con el que te registraste.",
+
+    "Profile": "Perfil",
+    "Profile Information": "Datos del perfil",
+    "Update your account's profile information and email address.": "Actualiza los datos de tu cuenta y tu correo electrónico.",
+    "Update Password": "Cambiar la contraseña",
+    "Ensure your account is using a long, random password to stay secure.": "Usa una contraseña larga y difícil de adivinar para mantener la cuenta segura.",
+    "Save": "Guardar",
+    "Saved.": "Guardado.",
+    "Cancel": "Cancelar",
+
+    "Delete Account": "Eliminar la cuenta",
+    "Are you sure you want to delete your account?": "¿Seguro que quieres eliminar tu cuenta?",
+    "Once your account is deleted, all of its resources and data will be permanently deleted. Before deleting your account, please download any data or information that you wish to retain.": "Al eliminar la cuenta se borran para siempre todos sus datos. Antes de hacerlo, descarga lo que quieras conservar.",
+    "Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.": "Al eliminar la cuenta se borran para siempre todos sus datos. Escribe tu contraseña para confirmar que quieres eliminarla.",
+
+    "Dashboard": "Panel",
+    "You're logged in!": "Has iniciado sesión."
+}
