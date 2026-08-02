@@ -17,7 +17,13 @@ class RouteServiceProvider extends ServiceProvider
      *
      * @var string
      */
-    public const HOME = '/dashboard';
+    /**
+     * Solo como destino de reserva cuando no hay usuario a quien preguntar.
+     *
+     * Con sesión iniciada manda `User::rutaDeInicio()`, que lleva a cada rol
+     * a donde trabaja (H-48). Antes esto valía '/dashboard' para todos.
+     */
+    public const HOME = '/';
 
     /**
      * Define your route model bindings, pattern filters, and other route configuration.

@@ -83,7 +83,10 @@ return [
     |
     */
 
-    'locale' => 'en',
+    // La tienda es en español (H-49). El paginador y los mensajes de error
+    // salían en inglés sobre pantallas íntegramente en español, que es el
+    // mismo problema de una sola voz que cerró H-18 con la marca.
+    'locale' => env('APP_LOCALE', 'es'),
 
     /*
     |--------------------------------------------------------------------------

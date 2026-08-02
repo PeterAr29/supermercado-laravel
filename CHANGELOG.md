@@ -6,6 +6,28 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [No publicado]
 
+### Fase 7 — Lo que solo se ve en pantalla — 2026-08-02
+
+**Cambiado**
+- **Cada rol aterriza donde trabaja** (`H-48`): el administrador en `/admin`, el cliente en la tienda. Los dos caían en `/dashboard`, el marcador de posición de Breeze —«Dashboard» y «You're logged in!»—, en inglés y sin nada detrás. La decisión vive en `User::rutaDeInicio()`
+- **Todo lo que imprimía el framework pasa a español** (`H-49`): la paginación, los mensajes de validación, y las pantallas de acceso, registro, perfil, recuperación y verificación
+- **El kardex distingue quién movió el stock** (`H-51`): «Sistema» para los asientos que escribe un seeder, «Invitado» solo para la compra de quien no tiene cuenta
+
+**Eliminado**
+- `resources/views/dashboard.blade.php` y la ruta `/dashboard`
+- El campo «¿Qué debemos considerar al comprar este producto?» de la ficha (`H-50`), que quedaba **fuera** del formulario: el cliente escribía su indicación y se evaporaba sin avisar. Se retira por el mismo argumento con el que la dirección del cliente salió del roadmap — sin nadie que prepare el pedido, esa nota no la lee ningún humano
+
+**Notas**
+- Los cuatro salieron de **arrancar la aplicación y mirarla**, con el roadmap ya dado por terminado y 49 tests en verde. Las cuatro pantallas respondían `200` y hacían lo que su código decía
+- **H-49 era el doble de grande, y lo dijo el test.** La paginación tiene sus cadenas en dos sitios: `pagination.php` y las claves JSON del propio paginador. Traducido solo el primero, el texto seguía en inglés
+- Los mensajes empiezan por «El campo :attribute»: el sustituto se inserta sin artículo y en minúscula, y sin él salía «producto es obligatorio.»
+- **H-51 no era un error siempre**: «Invitado» era correcto para la compra de un invitado y falso solo para el asiento de apertura
+- `/dashboard` era la única ruta con el middleware `verified`. Ya no la usa nadie, pero no cambia nada: `User` no implementa `MustVerifyEmail`, así que ese middleware ya dejaba pasar a todo el mundo
+- ⚠️ Si tenías `.env` propio, añade `APP_LOCALE=es`
+- Verificado: `php artisan test` **63 pasan, 164 aserciones** (eran 49) · `./vendor/bin/pint --test` 170 archivos limpios · y **el recorrido en navegador de las 21 pantallas**, que es como salieron
+
+---
+
 ### Estructura — Se aplana la carpeta anidada — 2026-08-02
 
 **Cambiado**
@@ -205,13 +227,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## Fases pendientes
 
-| Fase | Nombre | Issue | Estado |
-|---|---|---|---|
-| 7 | Lo que solo se ve en pantalla (`H-48`…`H-51`) | [#18](https://github.com/PeterAr29/supermercado-laravel/issues/18) | ⬜ Pendiente |
+Ninguna. Las fases 0 a 7 del [roadmap](docs/03-ROADMAP.md) están cerradas, y con
+H-27 y H-51 resueltos **no queda ningún hallazgo abierto** de los 51 registrados.
 
-Las fases 0 a 6 están cerradas, y H-27 también. La **Fase 7** apareció el 2026-08-02
-al arrancar la aplicación y recorrerla en un navegador con el roadmap ya dado por
-terminado: cuatro defectos de lo que se lee, no de lo que se ejecuta. Detalle en
-[`docs/03-ROADMAP.md`](docs/03-ROADMAP.md).
-
-Después de la Fase 7, lo que venga sale del backlog, al final del roadmap.
+Lo que venga ahora sale del backlog, al final del roadmap.

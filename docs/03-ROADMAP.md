@@ -16,7 +16,7 @@ Cada fase tiene **objetivo**, **alcance cerrado**, **checklist** y **criterio de
 | 4 | Separación de capas (MVC real) | [#4](https://github.com/PeterAr29/supermercado-laravel/issues/4) ✅ | H-12, H-13, H-19, H-20, H-45, H-46 |
 | 5 | Capa de presentación | [#5](https://github.com/PeterAr29/supermercado-laravel/issues/5) ✅ | H-15…H-18, H-43, H-47 |
 | 6 | Robustez y calidad | [#6](https://github.com/PeterAr29/supermercado-laravel/issues/6) ✅ | H-22, H-23, H-24, H-34 |
-| 7 | Lo que solo se ve en pantalla | [#18](https://github.com/PeterAr29/supermercado-laravel/issues/18) | H-48…H-51 |
+| 7 | Lo que solo se ve en pantalla | [#18](https://github.com/PeterAr29/supermercado-laravel/issues/18) ✅ | H-48…H-51 |
 | — | Decisión sobre carpeta anidada | [#7](https://github.com/PeterAr29/supermercado-laravel/issues/7) ✅ | H-27 |
 
 ### Cambio de plan — 2026-08-01
@@ -461,7 +461,7 @@ estaba escrito.
 
 ---
 
-## Fase 7 — Lo que solo se ve en pantalla ⬜
+## Fase 7 — Lo que solo se ve en pantalla ✅
 
 **Objetivo:** que lo que la tienda **enseña** esté a la altura de lo que hace.
 
@@ -472,23 +472,49 @@ Es la tercera vez que este proyecto tropieza con lo mismo. H-45 (codificación r
 ### Checklist
 
 **Bloque A — La pantalla de después del login** *(H-48)* 🟡
-- [ ] Decidir a dónde va cada rol al iniciar sesión: el administrador tiene `/admin`; el cliente, `/mi-cuenta` y `/mis-pedidos`
-- [ ] Retirar o reescribir `dashboard.blade.php`, que hoy es el marcador de posición de Breeze —«Dashboard» / «You're logged in!»— en inglés
+- [x] Decidir a dónde va cada rol al iniciar sesión — **decidido: administrador a `/admin`, cliente a la tienda**
+- [x] Retirar `dashboard.blade.php` y la ruta `/dashboard`. La decisión vive en `User::rutaDeInicio()`
 
 **Bloque B — Una sola voz** *(H-49)* 🟢
-- [ ] Traducir la paginación: afecta a **siete** pantallas, la del catálogo y seis del panel
-- [ ] Revisar que no quede ninguna otra cadena del framework en inglés a la vista
+- [x] Traducir la paginación — en **dos** sitios, no uno: `pagination.php` y las claves JSON del propio paginador
+- [x] Revisar que no quede ninguna otra cadena del framework en inglés a la vista — 36 más, de las pantallas de Breeze, y los mensajes de validación
 
 **Bloque C — El campo que no recoge nada** *(H-50)* 🟡 — *requiere decisión*
-- [ ] Decidir: la indicación del cliente («tipo de corte, tamaño…») **se guarda** —columna nueva en la línea de carrito, que viaja a la de venta y se enseña en el pedido— **o el campo se retira de la ficha**
-- [ ] Ejecutar la decisión. Lo que no puede quedarse es pidiendo un dato que nadie lee
+- [x] Decidir — **decidido: se retira**, por el mismo argumento con el que salió del roadmap la dirección del cliente
+- [x] Ejecutar la decisión, dejando en la vista un comentario de qué había ahí y por qué se fue
 
 **Bloque D — Quién movió el stock** *(H-51)* 🟢
-- [ ] El kardex distingue *sin usuario y con origen* (lo movió el documento) de *sin usuario y sin origen* (lo movió el sistema). «Invitado» es un comprador de la tienda, no el autor de un asiento
+- [x] El kardex distingue los dos casos, en `MovimientoInventario::autor()` y no en Blade
 
-### Criterio de aceptación
+### Criterio de aceptación — ✅ cumplido
 
 Un recorrido en navegador de las mismas 21 pantallas no encuentra ninguna cadena del framework en inglés a la vista, ningún campo que pida datos que no se guardan, y ninguna pantalla que no sepa a quién sirve. **Se comprueba mirando, que es como salieron.**
+
+**Verificado el 2026-08-02, recorriendo la aplicación con Chrome:**
+
+| Se miró | Antes | Ahora |
+|---|---|---|
+| Pie del catálogo | `Showing 1 to 12 of 40 results` | **`Mostrando 1 a 12 de 40 resultados`** |
+| Pantalla de acceso | `Email` · `Password` · `Remember me` · `Log in` | **`Correo electrónico` · `Contraseña` · `Recuérdame` · `Entrar`** |
+| Credenciales erróneas | `These credentials do not match our records.` | **`Estas credenciales no coinciden con nuestros registros.`** |
+| Login del administrador | `/dashboard` — «You're logged in!» | **`/admin`**, el panel |
+| Login del cliente | `/dashboard` — la misma pantalla | **`/`**, la tienda |
+| Ficha de producto | un textarea que no recogía nada | sin él |
+| Kardex, saldo de apertura | «Invitado» | **«Sistema»** |
+
+- `php artisan test` — **63 pasan, 164 aserciones, 0 fallos** (eran 49). **14 tests nuevos**
+- `./vendor/bin/pint --test` — 170 archivos, sin cambios pendientes
+- Sin errores de consola ni respuestas ≥400 en el recorrido, salvo el **403** que debe salir: un cliente en `/admin`
+
+### Lo que el hallazgo no sabía
+
+**H-49 era el doble de grande.** La paginación tiene sus cadenas en **dos** sitios: `previous`/`next` en `pagination.php`, pero «Showing / to / of / results» son claves JSON de la propia vista del paginador. Traducido solo el primero, el texto seguía en inglés — y eso **lo dijo el test, no la lectura del código**: `assertDontSee('Showing')` falló y ahí apareció la otra mitad. Aparecieron además 36 cadenas de las pantallas de Breeze y todos los mensajes de validación.
+
+**Y un matiz de redacción que solo se ve escribiéndolo:** `:attribute` se sustituye tal cual, sin artículo y en minúscula. Con `':attribute es obligatorio.'` el mensaje salía **«producto es obligatorio.»**, que no es español. Todos empiezan por «El campo :attribute».
+
+**H-51 no era un error siempre.** «Invitado» era **correcto** para la compra de un invitado —que la tienda permite (H-10)— y falso solo para el asiento de apertura. El fallo no era la palabra, era no distinguir los dos casos.
+
+**Efecto lateral de retirar `/dashboard`:** era la única ruta con el middleware `verified`. Ahora no lo usa nadie, pero no cambia nada: `User` no implementa `MustVerifyEmail`, así que ese middleware **ya dejaba pasar a todo el mundo**. La verificación de correo lleva inactiva desde el principio; queda anotado en H-48 por si algún día se quiere de verdad.
 
 ### Nota de método
 

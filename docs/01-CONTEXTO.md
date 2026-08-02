@@ -1,6 +1,6 @@
 # 01 — Contexto del proyecto
 
-> **Estado descrito: tras la Fase 6 (2026-08-02).** Este documento dice cómo está el proyecto **hoy** y cómo llegó hasta aquí. Qué cambió en cada fase está en [`../CHANGELOG.md`](../CHANGELOG.md); por qué, en [`03-ROADMAP.md`](03-ROADMAP.md).
+> **Estado descrito: tras la Fase 7 (2026-08-02).** Este documento dice cómo está el proyecto **hoy** y cómo llegó hasta aquí. Qué cambió en cada fase está en [`../CHANGELOG.md`](../CHANGELOG.md); por qué, en [`03-ROADMAP.md`](03-ROADMAP.md).
 
 ## Qué es
 
@@ -19,10 +19,10 @@ Entre los dos está el **inventario**: un kardex donde toda entrada, salida y aj
 | PHP | 8.1.25 |
 | Auth | Laravel Breeze `^1.29` (sesión + Blade), con dos roles: `cliente` y `admin` |
 | BD | MySQL (XAMPP, `DB_DATABASE=laravel`; tests en `laravel_testing`) |
-| Vistas | Blade, un solo `<head>` en `layouts/base` |
+| Vistas | Blade, un solo `<head>` en `layouts/base`; interfaz en español (`lang/es`) |
 | CSS | **Tailwind compilado por Vite.** Ningún CDN, ninguna clase de Bootstrap |
 | Build | Vite + npm (`public/build` no se versiona) |
-| Tests | PHPUnit 10 — 49 tests, 128 aserciones |
+| Tests | PHPUnit 10 — 63 tests, 164 aserciones |
 | Estilo | Laravel Pint (`./vendor/bin/pint`) |
 
 ## Cómo llegó a ser lo que es
@@ -55,6 +55,7 @@ Auditoría de 47 hallazgos y siete fases de trabajo, del 2026-08-01 al 2026-08-0
 | 4 | Form Requests, cinco servicios, y ningún controlador de más de 15 líneas |
 | 5 | Un solo layout, Tailwind por Vite, adiós a Bootstrap sin cargar |
 | 6 | Paginación, factories, 24 tests de dominio y el respaldo automatizado |
+| 7 | Lo que solo se ve en pantalla: cada rol aterriza donde trabaja, y todo habla español |
 
 **Google Sheets se retiró** en la Fase 3: era la tercera fuente de proveedores en competencia y la única sin conexión con órdenes ni stock. La carpeta anidada —la app vivía un nivel por debajo del repositorio— se aplanó al cerrar H-27.
 
@@ -75,12 +76,12 @@ app/
 ├── Services/             5 servicios — aquí vive el negocio
 └── View/Components/      AppLayout, GuestLayout (de Breeze)
 
-resources/views/          63 vistas Blade; layouts/base es el único <head>
+resources/views/          62 vistas Blade; layouts/base es el único <head>
 routes/web.php            /admin tras ['auth','admin'], zona de usuario tras 'auth', tienda pública
 database/migrations/      29 migraciones (4 de Laravel/Breeze, 25 del dominio)
 database/seeders/         6 seeders encadenados por DatabaseSeeder
 database/factories/       4 factories
-tests/                    14 archivos, 49 tests
+tests/                    17 archivos, 63 tests
 ```
 
 ### Las capas, y qué no hace cada una

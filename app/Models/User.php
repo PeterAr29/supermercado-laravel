@@ -66,6 +66,23 @@ class User extends Authenticatable
         return $this->rol === RolUsuario::Cliente;
     }
 
+    /**
+     * Dónde aterriza al iniciar sesión (H-48).
+     *
+     * Cada rol va a donde trabaja: el administrador al panel, el cliente a la
+     * tienda —con «Mis pedidos» y «Mi cuenta» ya en la cabecera—. Hasta ahora
+     * los dos caían en `/dashboard`, que era el marcador de posición que trae
+     * Breeze de fábrica: «Dashboard» y «You're logged in!», en inglés y sin
+     * nada detrás. H-47 arregló que esa pantalla *pintara*; nunca se escribió
+     * qué debía decir, porque no era de nadie.
+     */
+    public function rutaDeInicio(): string
+    {
+        return $this->esAdmin()
+            ? route('admin.dashboard')
+            : route('home');
+    }
+
     /** Compras del usuario, para "Mis pedidos" (H-10). */
     public function ventas()
     {
