@@ -6,6 +6,22 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [No publicado]
 
+_Nada todavía._
+
+---
+
+## [1.0.0] — 2026-08-02
+
+**Primera versión publicada.** Cierra el reordenamiento completo: ocho fases (0→7) y los
+51 hallazgos de la auditoría, ninguno abierto.
+
+Lo que había el 2026-08-01 era un catálogo que cualquier visitante anónimo podía borrar,
+con las ventas sin dueño, el stock que solo subía, cuatro marcas distintas según la
+pantalla y un módulo de proveedores que **nunca había llegado a ejecutarse**. Lo que hay
+ahora es una tienda con dos paneles, inventario con kardex, capas separadas y 63 tests.
+
+El detalle, fase a fase, debajo.
+
 ### Fase 7 — Lo que solo se ve en pantalla — 2026-08-02
 
 **Cambiado**
