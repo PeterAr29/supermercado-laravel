@@ -37,6 +37,7 @@ Auditoría del 2026-08-01 sobre `routes/`, 8 controladores de dominio, 10 modelo
 | H-29 | 🔴 | Bug | `Proveedor` apunta a la tabla `proveedors`, que no existe | 1 |
 | H-30 | 🔴 | Bug | `OrdenCompraItem` escribe timestamps que su tabla no tiene | 1 |
 | H-31 | 🟠 | Bug | Las rutas de perfil de Breeze nunca se registraron | 1 |
+| H-32 | 🔴 | Bug | Un producto retirado rompía órdenes y falseaba el carrito | 1 |
 
 ---
 
@@ -94,6 +95,26 @@ Es el peor tipo de bug: valida, guarda, redirige con "creado correctamente" y pi
 `DB::beginTransaction()` sin `try/catch`. Si el `foreach` falla a mitad (producto inexistente, pivot nulo — muy probable dado H-04), queda una orden huérfana con total 0 y la transacción sin cerrar.
 
 **Arreglo:** `DB::transaction(function () { ... })` con closure.
+
+### H-32 — Un producto retirado rompía órdenes y falseaba el carrito
+**Detectado en la revisión del PR de la Fase 1.** *(Regresión introducida por el propio H-02; resuelta antes de fusionar.)*
+
+**Dónde:** `app/Models/OrdenCompraItem.php` · `app/Http/Controllers/CarritoController.php`
+
+Al añadir `SoftDeletes` a `Producto` (H-02), las relaciones `belongsTo(Producto::class)` dejaron de resolver los productos retirados, porque el *global scope* de SoftDeletes los excluye. Consecuencias en dos sitios:
+
+| Dónde | Síntoma |
+|---|---|
+| `OrdenCompraController::recibir()` y `ordenes/show` | **Error fatal:** `Call to a member function increment() on null` |
+| `carrito/index`, `mostrarPago`, `procesarPago` | **No fallaba:** calculaba el subtotal como 0 y permitía pagar S/ 0 por un producto retirado |
+
+El segundo es más peligroso justamente porque no rompe nada visible.
+
+**Arreglo, distinto en cada caso porque la semántica es distinta:**
+- **Documento histórico** — `OrdenCompraItem::producto()` usa `->withTrashed()`: una orden ya emitida debe seguir resolviendo su producto pase lo que pase.
+- **Dato accesorio** — `CarritoController` filtra con `whereHas('producto')`: un producto retirado no debe poder comprarse, así que su línea desaparece del carrito.
+
+**Lección:** activar `SoftDeletes` no es un cambio local. Obliga a revisar **cada** relación que apunte al modelo y decidir, una por una, si el registro histórico debe sobrevivir al borrado. Añadido a `04-CONVENCIONES.md`.
 
 ### H-31 — Las rutas de perfil de Breeze nunca se registraron
 **Descubierto durante la Fase 1.** *(Resuelto en la misma fase, ver justificación abajo.)*

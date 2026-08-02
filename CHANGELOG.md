@@ -22,6 +22,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 - `Proveedor` declara su tabla: apuntaba a `proveedors`, inexistente (`H-29`)
 - `OrdenCompraItem` deja de escribir timestamps que su tabla no tiene (`H-30`)
 - Registradas las rutas de perfil de Breeze: `/profile` devolvía 404 (`H-31`)
+- Un producto retirado ya no rompe la recepción de órdenes ni deja pagar S/ 0 en el carrito (`H-32`)
 
 **Notas**
 - H-29 y H-30 revelan que el módulo de proveedores y órdenes de compra nunca llegó a ejecutarse

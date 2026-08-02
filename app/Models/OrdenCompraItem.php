@@ -19,6 +19,8 @@ class OrdenCompraItem extends Model
 
     public function producto()
     {
-        return $this->belongsTo(Producto::class);
+        // withTrashed: una orden ya emitida debe seguir resolviendo su producto
+        // aunque este se haya retirado del catalogo (H-02).
+        return $this->belongsTo(Producto::class)->withTrashed();
     }
 }
