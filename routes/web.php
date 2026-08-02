@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\CategoriaController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\InventarioController;
 use App\Http\Controllers\Admin\OrdenCompraController;
@@ -35,6 +36,12 @@ Route::middleware(['auth', 'admin'])
         // Catálogo — sin 'show': la ficha pública ya existe en la tienda
         Route::resource('productos', AdminProductoController::class)->except(['show']);
 
+        // Categorías — era alcance de la Fase 3 y se quedó fuera: hasta ahora
+        // solo existían las que sembraba CategoriaSeeder.
+        Route::resource('categorias', CategoriaController::class)
+            ->except(['show'])
+            ->parameters(['categorias' => 'categoria']);
+
         // Proveedores — sin 'show': no existe ficha de detalle y el resource
         // registraba una ruta que reventaba con 500 (H-07).
         //
@@ -57,17 +64,22 @@ Route::middleware(['auth', 'admin'])
             Route::delete('productos/{producto}', [ProveedorProductoController::class, 'destroy'])->name('destroy');
         });
 
-        // Órdenes de compra — pasa a Route::resource en la Fase 4 (H-19)
-        Route::get('/ordenes', [OrdenCompraController::class, 'index'])->name('ordenes.index');
-        Route::get('/ordenes/create', [OrdenCompraController::class, 'create'])->name('ordenes.create');
-        Route::post('/ordenes', [OrdenCompraController::class, 'store'])->name('ordenes.store');
-        Route::get('/ordenes/{orden}', [OrdenCompraController::class, 'show'])->name('ordenes.show');
-        Route::post('/ordenes/{orden}/recibir', [OrdenCompraController::class, 'recibir'])->name('ordenes.recibir');
+        // Órdenes de compra. Sin 'edit'/'update'/'destroy': una orden emitida
+        // no se retoca, se recibe — y eso es una acción con nombre propio,
+        // porque es la única que mueve stock (H-19).
+        Route::resource('ordenes', OrdenCompraController::class)
+            ->only(['index', 'create', 'store', 'show'])
+            ->parameters(['ordenes' => 'orden']);
 
-        // AJAX — productos de un proveedor (usado por ordenes/create)
-        // La URL se reorganiza en la Fase 4 (H-19); aquí solo se mueve.
-        Route::get('/proveedor/{id}/productos', [OrdenCompraController::class, 'productosProveedor'])
-            ->name('proveedor.productos.json');
+        Route::post('/ordenes/{orden}/recibir', [OrdenCompraController::class, 'recibir'])
+            ->name('ordenes.recibir');
+
+        // Peticiones del navegador que devuelven JSON, agrupadas bajo 'ajax/'
+        // para que se vea de un vistazo que no son pantallas (H-19).
+        Route::prefix('ajax')->name('ajax.')->group(function () {
+            Route::get('/proveedores/{proveedor}/productos', [OrdenCompraController::class, 'productosProveedor'])
+                ->name('proveedor.productos');
+        });
 
         // Inventario y kardex (H-35)
         Route::get('/inventario', [InventarioController::class, 'index'])->name('inventario.index');
