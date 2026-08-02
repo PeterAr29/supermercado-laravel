@@ -90,9 +90,28 @@ Reglas para que el proyecto no vuelva al estado descrito en `02-HALLAZGOS.md`. E
 ## 5. Front-end
 
 - **Tailwind, únicamente.** Cero clases de Bootstrap (`container`, `card`, `btn`, `form-control`, `row`, `col-md-*`)
-- Assets por **Vite** (`@vite`), nunca por CDN
-- Un solo layout base de tienda + el `guest` de Breeze
+- Assets por **Vite** (`@vite`), nunca por CDN. Ninguna vista trae su propio
+  `<link>` ni su propio `<script src="...">`: si lo hace, el bundle deja de ser
+  la única fuente y vuelven a convivir dos sistemas de assets (H-17)
+- **Un solo `<head>`: `layouts/base`.** Todo lo demás cuelga de él —`tienda`,
+  `admin`, `app` y `guest`—. Llegaron a existir cinco cabeceras distintas, y
+  bastaba olvidar una al tocar algo para que una pantalla se viera diferente
+  sin que nadie supiera por qué (H-15)
+- La marca sale de `config('app.name')`, nunca escrita a mano (H-18)
 - Lo que se repite en 3 vistas o más se convierte en componente Blade
+- **Ojo con `@yield` y `{{ $slot }}`:** un layout de herencia (`@extends`) usa
+  `@yield`; uno de componente (`<x-...>`) usa `$slot`. Mezclarlos no falla —
+  simplemente **no pinta nada**, y la página responde `200` (H-47)
+
+### Arrancar el proyecto
+
+`public/build` no se versiona, así que tras clonar o cambiar de rama:
+
+```bash
+composer install
+npm install && npm run build     # sin esto, @vite lanza "Vite manifest not found"
+php artisan migrate --seed
+```
 
 ## 6. Git
 
@@ -156,7 +175,11 @@ convierte el tablero en decoración.
 
 1. Se cumple el **criterio de aceptación** escrito en `03-ROADMAP.md` — verificado, no supuesto.
    Y la verificación mira **el contenido**, no solo el código de estado: comprobar que
-   una pantalla responde `200` no dice nada sobre si lo que enseña está bien (H-45).
+   una pantalla responde `200` no dice nada sobre si lo que enseña está bien.
+
+   Ha pasado dos veces: H-45 (la codificación rota respondía `200`) y H-47 (el perfil
+   se pintaba **vacío** y respondía `200`, con un test en verde durante meses). Toda
+   comprobación de una pantalla afirma algo **que tiene que aparecer en el HTML**.
 2. `php artisan test` pasa.
 3. `php artisan pint` ejecutado.
 4. Los hallazgos cerrados se marcan en `02-HALLAZGOS.md`.

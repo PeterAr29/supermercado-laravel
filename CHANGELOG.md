@@ -6,6 +6,33 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [No publicado]
 
+### Fase 5 — Capa de presentación — 2026-08-02
+
+**Cambiado**
+- **Un solo layout base** (`H-15`). Convivían cinco cabeceras distintas: `layout`, `admin`, `layoutCenter`, `super` y `guest`
+- **Todo el CSS y el JS salen de Vite** (`H-17`). Tailwind entraba por el CDN de play, que compila en el navegador en cada carga; Swiper y bootstrap-icons por jsdelivr; la fuente de las pantallas de acceso, por fonts.bunny.net
+- **Las diez pantallas escritas en Bootstrap pasan a Tailwind** (`H-16`). Usaban `btn`, `card`, `form-control`, `table-striped`… pero Bootstrap no se cargaba en ninguna parte: se veían como HTML sin estilos
+- **Una sola marca**, desde `config('app.name')` (`H-18`). Convivían "PlazaKing", "Tattos Market", "Supermercado" y "Laravel" según la pantalla
+
+**Añadido**
+- Componentes Blade: `x-alerta-flash`, `x-producto-card` y `x-campo`
+- Swiper como dependencia de npm, arrancado desde `resources/js/app.js`
+- El catálogo de cada proveedor muestra el **margen** por producto
+
+**Eliminado**
+- `layouts/layoutCenter`, `layouts/super`, `components/super-layout`, `components/navbar` y `welcome`, que ya no usaba nadie
+
+**Corregido**
+- **El perfil y el dashboard se pintaban vacíos** (`H-47`): `AppLayout` apuntaba a un layout que solo tenía `@yield('content')` y nunca imprimía `$slot`
+- El botón "Agregar" del home tampoco enviaba `producto_id` (`H-43`, que la Fase 3 dio por cerrado arreglando solo la ficha)
+
+**Notas**
+- ⚠️ Arrancar el proyecto ahora exige `npm install && npm run build`: `public/build` no se versiona
+- H-47 llevaba meses oculto detrás de un test en verde que solo comprobaba `assertOk()`. Una pantalla vacía responde `200`. Por eso la verificación de esta fase mira **el HTML de 26 pantallas**, no su código de estado
+- Verificado: **215 comprobaciones, 0 fallos** — 51 de la fase y 164 de no-regresión. `php artisan test`: 25 pasan
+
+---
+
 ### Fase 4 — Separación de capas (MVC real) — 2026-08-02
 
 **Cambiado**
@@ -142,5 +169,4 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 | Fase | Nombre | Estado |
 |---|---|---|
-| 5 | Capa de presentación | ⬜ Pendiente |
 | 6 | Robustez y calidad | ⬜ Pendiente |
