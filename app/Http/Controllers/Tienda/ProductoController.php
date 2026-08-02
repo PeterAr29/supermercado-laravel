@@ -17,9 +17,15 @@ use Illuminate\Http\Request;
  */
 class ProductoController extends Controller
 {
+    /** Cuántos productos caben en una página del catálogo. */
+    private const POR_PAGINA = 12;
+
     /** Listado con buscador y filtro por categoría. */
     public function index(Request $request)
     {
+        // paginate() en vez de get(): con el catálogo entero en una sola
+        // página el listado agotaba la memoria de PHP (H-22). withQueryString()
+        // conserva el buscador y la categoría al pasar de página.
         $productos = Producto::with('categoria')
             ->when($request->buscar, function ($q) use ($request) {
                 $q->where('nombre', 'like', '%'.$request->buscar.'%');
@@ -27,7 +33,9 @@ class ProductoController extends Controller
             ->when($request->categoria, function ($q) use ($request) {
                 $q->where('categoria_id', $request->categoria);
             })
-            ->get();
+            ->orderBy('nombre')
+            ->paginate(self::POR_PAGINA)
+            ->withQueryString();
 
         $categorias = Categoria::all();
 
@@ -59,7 +67,11 @@ class ProductoController extends Controller
 
     public function porCategoria(Categoria $categoria)
     {
-        $productos = Producto::where('categoria_id', $categoria->id)->get();
+        $productos = Producto::with('categoria')
+            ->where('categoria_id', $categoria->id)
+            ->orderBy('nombre')
+            ->paginate(self::POR_PAGINA);
+
         $categorias = Categoria::all();
 
         return view('productos.index', compact(
